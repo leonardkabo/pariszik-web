@@ -9,7 +9,7 @@
 
     <!-- === PWA Manifest === -->
     <link rel="manifest" href="/manifest.json">
-    <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/leonardkabo/pariszik-web/main/assets/icon-512.png">
+    <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/leonardkabo/pariszik-web/main/assets/icon-512.webp">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -172,21 +172,54 @@
             margin: 20px 0;
         }
 
-        .track-item {
+        /* === Carte de musique === */
+        .track-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            overflow: hidden;
+            transition: transform 0.3s, box-shadow 0.3s;
+            cursor: pointer;
+            position: relative;
+            margin: 10px 0;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
             padding: 10px;
-            background: rgba(255, 255, 255, 0.05);
-            margin: 10px 0;
+        }
+
+        .track-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(0, 255, 255, 0.1);
+        }
+
+        .track-card img {
+            width: 60px;
+            height: 60px;
+            object-fit: cover;
             border-radius: 8px;
         }
 
-        .cover-mini {
-            width: 40px;
-            height: 40px;
-            object-fit: cover;
-            border-radius: 6px;
+        .track-info {
+            flex: 1;
+        }
+
+        .play-btn {
+            background: linear-gradient(45deg, #00ffff, #ff1493);
+            color: white;
+            border: none;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .track-card:hover .play-btn {
+            opacity: 1;
         }
     </style>
 </head>
@@ -199,7 +232,7 @@
 <nav class="navbar navbar-dark">
     <div class="container-fluid">
         <a class="navbar-brand">
-            <img src="https://raw.githubusercontent.com/leonardkabo/pariszik-web/main/assets/logo-pariszik.png" alt="Logo ParisZik">
+            <img src="https://raw.githubusercontent.com/leonardkabo/pariszik-web/main/assets/logo-pariszik.webp" alt="Logo ParisZik">
             <span>ParisZik</span>
         </a>
         <div class="d-flex">
@@ -286,7 +319,7 @@
 
 <!-- Player -->
 <div class="player" id="player" style="display: none;">
-    <img id="playerCover" src="https://raw.githubusercontent.com/leonardkabo/pariszik-web/main/assets/default-cover.png" width="60" class="rounded me-3">
+    <img id="playerCover" src="https://raw.githubusercontent.com/leonardkabo/pariszik-web/main/assets/default-cover.webp" width="60" class="rounded me-3" onerror="this.onerror=null;this.src='https://raw.githubusercontent.com/leonardkabo/pariszik-web/main/assets/default-cover.webp';">
     <div style="flex: 1;">
         <strong id="nowPlaying">Aucune musique</strong><br>
         <small id="nowArtist">-</small>
@@ -315,7 +348,7 @@
 
         // === URL des ressources publiques (GitHub) ===
         const PUBLIC_URL = 'https://raw.githubusercontent.com/leonardkabo/pariszik-web/main/assets';
-        const DEFAULT_COVER = `${PUBLIC_URL}/default-cover.png`;
+        const DEFAULT_COVER = `${PUBLIC_URL}/default-cover.webp`;
         const API_URL = 'https://pariszik-server-production.up.railway.app';
 
         // Pages
@@ -581,39 +614,38 @@
             container.innerHTML = '';
             tracks.forEach((track, index) => {
                 const isFav = favoritesList.some(f => f.id === track.id);
-                const div = document.createElement('div');
-                div.className = 'track-item';
-                div.innerHTML = `
-                    <img class="cover-mini" src="${track.cover || DEFAULT_COVER}" onerror="this.onerror=null;this.src='${DEFAULT_COVER}';">
-                    <div style="flex: 1;">${track.title}</div>
-                    <button class="btn btn-sm btn-outline-light me-2" onclick="window.toggleFavorite(event, ${index})">
-                        <i class="${isFav ? 'fas fa-heart' : 'far fa-heart'}"></i>
-                    </button>
-                    <button class="btn btn-sm btn-primary" onclick="window.playTrack(${index})">▶️</button>
+                const card = document.createElement('div');
+                card.className = 'track-card';
+                card.innerHTML = `
+                    <img src="${track.cover || DEFAULT_COVER}" onerror="this.onerror=null;this.src='${DEFAULT_COVER}';">
+                    <div class="track-info">
+                        <strong>${track.title}</strong>
+                        <small>${track.artist}</small>
+                    </div>
+                    <button class="play-btn"><i class="fas fa-play"></i></button>
                 `;
-                container.appendChild(div);
+                card.onclick = () => window.playTrack(index);
+                container.appendChild(card);
             });
         }
 
         function renderFeatured() {
             const container = document.getElementById('featuredTracks');
             container.innerHTML = '';
-            tracks.slice(0, 3).forEach(track => {
-                const isFav = favoritesList.some(f => f.id === track.id);
+            tracks.slice(0, 3).forEach((track, index) => {
                 const col = document.createElement('div');
                 col.className = 'col-md-4 mb-4';
                 col.innerHTML = `
-                    <div class="card" onclick="window.playTrack(${tracks.indexOf(track)})">
-                        <img src="${track.cover || DEFAULT_COVER}" onerror="this.onerror=null;this.src='${DEFAULT_COVER}';" style="height: 180px; object-fit: cover;">
-                        <div class="card-body">
-                            <h6>${track.title}</h6>
-                            <p class="text-muted">${track.artist}</p>
-                            <button class="btn btn-sm btn-outline-light" onclick="window.toggleFavorite(event, ${tracks.indexOf(track)}); event.stopPropagation();">
-                                <i class="${isFav ? 'fas fa-heart' : 'far fa-heart'}"></i>
-                            </button>
+                    <div class="track-card">
+                        <img src="${track.cover || DEFAULT_COVER}" onerror="this.onerror=null;this.src='${DEFAULT_COVER}';">
+                        <div class="track-info">
+                            <strong>${track.title}</strong>
+                            <small>${track.artist}</small>
                         </div>
+                        <button class="play-btn"><i class="fas fa-play"></i></button>
                     </div>
                 `;
+                col.onclick = () => window.playTrack(index);
                 container.appendChild(col);
             });
         }
@@ -626,17 +658,18 @@
                 return;
             }
             favoritesList.forEach((track, index) => {
-                const div = document.createElement('div');
-                div.className = 'track-item';
-                div.innerHTML = `
-                    <img class="cover-mini" src="${track.cover || DEFAULT_COVER}" onerror="this.onerror=null;this.src='${DEFAULT_COVER}';">
-                    <div style="flex: 1;">${track.title}</div>
-                    <button class="btn btn-sm btn-outline-light me-2" onclick="window.removeFavorite(${index})">
-                        <i class="fas fa-heart"></i>
-                    </button>
-                    <button class="btn btn-sm btn-primary" onclick="window.playTrackFromFavorites(${index})">▶️</button>
+                const card = document.createElement('div');
+                card.className = 'track-card';
+                card.innerHTML = `
+                    <img src="${track.cover || DEFAULT_COVER}" onerror="this.onerror=null;this.src='${DEFAULT_COVER}';">
+                    <div class="track-info">
+                        <strong>${track.title}</strong>
+                        <small>${track.artist}</small>
+                    </div>
+                    <button class="play-btn"><i class="fas fa-play"></i></button>
                 `;
-                container.appendChild(div);
+                card.onclick = () => window.playTrackFromFavorites(index);
+                container.appendChild(card);
             });
         }
 
