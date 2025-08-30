@@ -349,7 +349,7 @@
         // === URL des ressources publiques (GitHub) ===
         const PUBLIC_URL = 'https://raw.githubusercontent.com/leonardkabo/pariszik-web/main/assets';
         const DEFAULT_COVER = `${PUBLIC_URL}/default-cover.webp`;
-        const API_URL = 'https://pariszik-server-production.up.railway.app';
+        const API_URL = 'https://pariszik-server-production.up.railway.app'; // ✅ Vérifiez cette URL
 
         // Pages
         const home = document.getElementById('home');
@@ -379,6 +379,7 @@
                 tracks = await res.json();
                 renderAll();
             } catch (err) {
+                console.error('Erreur chargement tracks:', err);
                 showNotification('❌ Impossible de charger les musiques', 'error');
             }
         }
@@ -471,7 +472,7 @@
         // === Ajout de musique (vers le serveur) ===
         async function handleFile(file) {
             if (!file.name.endsWith('.mp3')) {
-                return showNotification('⚠️ Fichier invalide', 'error');
+                return showNotification('⚠️ Fichier invalide. Utilisez un .mp3', 'error');
             }
 
             const fileName = file.name.replace('.mp3', '').split('-').map(s => s.trim()).filter(Boolean);
@@ -489,23 +490,19 @@
                     body: formData
                 });
 
-                const newTrack = await res.json();
-
-                if (!newTrack.fileURL) {
-                    throw new Error("Le serveur n'a pas renvoyé d'URL de fichier");
+                if (!res.ok) {
+                    const errorText = await res.text();
+                    throw new Error(`Erreur serveur: ${res.status} ${errorText}`);
                 }
 
+                const newTrack = await res.json();
                 tracks.unshift(newTrack);
                 showNotification(`✅ "${title}" ajouté !`);
-
-                if (confirm(`"${title}" ajouté ! Voulez-vous l'écouter maintenant ?`)) {
-                    playTrack(newTrack);
-                }
-
                 renderAll();
+                playTrack(newTrack);
             } catch (err) {
-                console.error('Erreur:', err);
-                showNotification('❌ Échec upload ou lecture', 'error');
+                console.error('Erreur upload:', err);
+                showNotification(`❌ Échec: ${err.message}`, 'error');
             }
         }
 
