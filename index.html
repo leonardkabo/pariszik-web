@@ -23,7 +23,7 @@
             --secondary: #00ffff;
             --accent: #ffff00;
             --dark: #0f0c29;
-            --card: rgba(30, 25, 60, 0.8);
+            --card: rgba(255, 255, 255, 0.8);
             --hover: rgba(0, 255, 255, 0.1);
             --success: #32cd32;
             --danger: #ff4500;
@@ -341,9 +341,9 @@
         <strong id="nowPlaying">Aucune musique</strong><br>
         <small id="nowArtist">-</small>
     </div>
-    <button class="btn btn-sm btn-outline-light me-2"><i class="fas fa-step-backward"></i></button>
+    <button class="btn btn-sm btn-outline-light me-2" id="prevBtn"><i class="fas fa-step-backward"></i></button>
     <button class="btn btn-primary btn-sm me-2" id="playPauseBtn"><i class="fas fa-play"></i></button>
-    <button class="btn btn-sm btn-outline-light me-2"><i class="fas fa-step-forward"></i></button>
+    <button class="btn btn-sm btn-outline-light me-2" id="nextBtn"><i class="fas fa-step-forward"></i></button>
     <button class="btn btn-sm btn-outline-light" id="likeBtn"><i class="far fa-heart"></i></button>
 </div>
 
@@ -358,6 +358,8 @@
         const nowArtist = document.getElementById('nowArtist');
         const playPauseBtn = document.getElementById('playPauseBtn');
         const likeBtn = document.getElementById('likeBtn');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
         const notification = document.getElementById('notification');
         const dropzone = document.getElementById('dropzone');
         const fileInput = document.getElementById('fileInput');
@@ -543,6 +545,21 @@
             }
         });
 
+        // === Boutons NEXT / PREV ===
+        prevBtn.addEventListener('click', () => {
+            if (tracks.length === 0) return;
+            const index = (currentIndex - 1 + tracks.length) % tracks.length;
+            playTrack(tracks[index]);
+            currentIndex = index;
+        });
+
+        nextBtn.addEventListener('click', () => {
+            if (tracks.length === 0) return;
+            const index = (currentIndex + 1) % tracks.length;
+            playTrack(tracks[index]);
+            currentIndex = index;
+        });
+
         // === Bouton Cœur (Favoris) ===
         likeBtn.addEventListener('click', () => {
             const currentTrack = tracks.find(t => t.fileURL === audio.src);
@@ -622,39 +639,38 @@
             container.innerHTML = '';
             tracks.forEach((track, index) => {
                 const isFav = favoritesList.some(f => f.id === track.id);
-                const div = document.createElement('div');
-                div.className = 'track-item';
-                div.innerHTML = `
-                    <img class="cover-mini" src="${track.cover || DEFAULT_COVER}" onerror="this.onerror=null;this.src='${DEFAULT_COVER}';">
-                    <div style="flex: 1;">${track.title}</div>
-                    <button class="btn btn-sm btn-outline-light me-2" onclick="window.toggleFavorite(event, ${index})">
-                        <i class="${isFav ? 'fas fa-heart' : 'far fa-heart'}"></i>
-                    </button>
-                    <button class="btn btn-sm btn-primary" onclick="window.playTrack(${index})">▶️</button>
+                const card = document.createElement('div');
+                card.className = 'track-card';
+                card.innerHTML = `
+                    <img src="${track.cover || DEFAULT_COVER}" onerror="this.onerror=null;this.src='${DEFAULT_COVER}';">
+                    <div class="track-info">
+                        <strong>${track.title}</strong>
+                        <small>${track.artist}</small>
+                    </div>
+                    <button class="play-btn" onclick="window.playTrack(${index}); event.stopPropagation();"><i class="fas fa-play"></i></button>
                 `;
-                container.appendChild(div);
+                card.onclick = () => window.playTrack(index);
+                container.appendChild(card);
             });
         }
 
         function renderFeatured() {
             const container = document.getElementById('featuredTracks');
             container.innerHTML = '';
-            tracks.slice(0, 3).forEach(track => {
-                const isFav = favoritesList.some(f => f.id === track.id);
+            tracks.slice(0, 3).forEach((track, index) => {
                 const col = document.createElement('div');
                 col.className = 'col-md-4 mb-4';
                 col.innerHTML = `
-                    <div class="card" onclick="window.playTrack(${tracks.indexOf(track)})">
-                        <img src="${track.cover || DEFAULT_COVER}" onerror="this.onerror=null;this.src='${DEFAULT_COVER}';" style="height: 180px; object-fit: cover;">
-                        <div class="card-body">
-                            <h6>${track.title}</h6>
-                            <p class="text-muted">${track.artist}</p>
-                            <button class="btn btn-sm btn-outline-light" onclick="window.toggleFavorite(event, ${tracks.indexOf(track)}); event.stopPropagation();">
-                                <i class="${isFav ? 'fas fa-heart' : 'far fa-heart'}"></i>
-                            </button>
+                    <div class="track-card">
+                        <img src="${track.cover || DEFAULT_COVER}" onerror="this.onerror=null;this.src='${DEFAULT_COVER}';">
+                        <div class="track-info">
+                            <strong>${track.title}</strong>
+                            <small>${track.artist}</small>
                         </div>
+                        <button class="play-btn" onclick="window.playTrack(${index}); event.stopPropagation();"><i class="fas fa-play"></i></button>
                     </div>
                 `;
+                col.onclick = () => window.playTrack(index);
                 container.appendChild(col);
             });
         }
@@ -667,21 +683,22 @@
                 return;
             }
             favoritesList.forEach((track, index) => {
-                const div = document.createElement('div');
-                div.className = 'track-item';
-                div.innerHTML = `
-                    <img class="cover-mini" src="${track.cover || DEFAULT_COVER}" onerror="this.onerror=null;this.src='${DEFAULT_COVER}';">
-                    <div style="flex: 1;">${track.title}</div>
-                    <button class="btn btn-sm btn-outline-light me-2" onclick="window.removeFavorite(${index})">
-                        <i class="fas fa-heart"></i>
-                    </button>
-                    <button class="btn btn-sm btn-primary" onclick="window.playTrackFromFavorites(${index})">▶️</button>
+                const card = document.createElement('div');
+                card.className = 'track-card';
+                card.innerHTML = `
+                    <img src="${track.cover || DEFAULT_COVER}" onerror="this.onerror=null;this.src='${DEFAULT_COVER}';">
+                    <div class="track-info">
+                        <strong>${track.title}</strong>
+                        <small>${track.artist}</small>
+                    </div>
+                    <button class="play-btn" onclick="window.playTrackFromFavorites(${index}); event.stopPropagation();"><i class="fas fa-play"></i></button>
                 `;
-                container.appendChild(div);
+                card.onclick = () => window.playTrackFromFavorites(index);
+                container.appendChild(card);
             });
         }
 
-        // ✅ === Fonction manquante : renderAdminTracks ===
+        // === Fonction manquante : renderAdminTracks ===
         function renderAdminTracks() {
             const container = document.getElementById('adminTracksList');
             container.innerHTML = '';
@@ -710,6 +727,7 @@
             if (track) {
                 playTrack(track);
                 updateLikeButton(track);
+                currentIndex = index;
             } else {
                 showNotification('❌ Morceau introuvable', 'error');
             }
@@ -720,6 +738,7 @@
             if (track) {
                 playTrack(track);
                 updateLikeButton(track);
+                currentIndex = tracks.findIndex(t => t.id === track.id);
             }
         };
 
