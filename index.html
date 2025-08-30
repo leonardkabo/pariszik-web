@@ -277,7 +277,7 @@
         const fileInput = document.getElementById('fileInput');
         const logoutAdmin = document.getElementById('logoutAdmin');
 
-        // === URL du serveur (à ne PAS changer sauf nouvelle déploiement) ===
+        // === URL du serveur ===
         const API_URL = 'https://pariszik-server-production.up.railway.app';
 
         // Pages
@@ -416,12 +416,23 @@
                 });
 
                 const newTrack = await res.json();
+
+                if (!newTrack.fileURL) {
+                    throw new Error("Le serveur n'a pas renvoyé d'URL de fichier");
+                }
+
                 tracks.unshift(newTrack);
-                showNotification(`✅ "${title}" ajouté et en lecture !`);
+                showNotification(`✅ "${title}" ajouté !`);
+
+                // ✅ Proposer de jouer (contourne le blocage du navigateur)
+                if (confirm(`"${title}" a été ajouté. Voulez-vous l'écouter maintenant ?`)) {
+                    playTrack(newTrack);
+                }
+
                 renderAll();
-                playTrack(newTrack);
             } catch (err) {
-                showNotification('❌ Échec upload serveur', 'error');
+                console.error('Erreur:', err);
+                showNotification('❌ Échec upload ou lecture', 'error');
             }
         }
 
@@ -434,12 +445,15 @@
             player.style.display = 'flex';
             audio.play().then(() => {
                 playPauseBtn.innerHTML = '<i class="fas fa-pause"></i>';
-            }).catch(() => showNotification('❌ Impossible de lire', 'error'));
+            }).catch(err => {
+                console.error('Erreur lecture:', err);
+                showNotification('❌ Impossible de lire le fichier', 'error');
+            });
         }
 
         playPauseBtn.addEventListener('click', () => {
             if (audio.paused) {
-                audio.play().catch(() => showNotification('❌ Échec', 'error'));
+                audio.play().catch(() => showNotification('❌ Échec lecture', 'error'));
                 playPauseBtn.innerHTML = '<i class="fas fa-pause"></i>';
             } else {
                 audio.pause();
