@@ -16,212 +16,6 @@
     <meta name="apple-mobile-web-app-title" content="ParisZik">
     <meta name="theme-color" content="#00ffff">
     <!-- ==================== -->
-
-    <style>
-        :root {
-            --primary: #ff1493;
-            --secondary: #00ffff;
-            --accent: #ffff00;
-            --dark: #0f0c29;
-            --card: rgba(30, 25, 60, 0.8);
-            --hover: rgba(0, 255, 255, 0.1);
-            --success: #32cd32;
-            --danger: #ff4500;
-        }
-
-        * {
-            font-family: 'Segoe UI', sans-serif;
-        }
-
-        body {
-            background: linear-gradient(135deg, var(--dark), #1a1a3a, #24243e);
-            color: white;
-            min-height: 100vh;
-        }
-
-        .navbar {
-            backdrop-filter: blur(10px);
-            background: rgba(15, 12, 41, 0.95);
-            border-bottom: 1px solid var(--secondary);
-        }
-
-        .navbar-brand {
-            display: flex;
-            align-items: center;
-            font-weight: 800;
-        }
-
-        .navbar-brand img {
-            width: 40px;
-            height: 40px;
-            margin-right: 10px;
-            border-radius: 8px;
-        }
-
-        .navbar-brand span {
-            background: linear-gradient(45deg, var(--primary), var(--secondary));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .sidebar {
-            min-height: 100vh;
-            background: rgba(15, 12, 41, 0.9);
-            position: fixed;
-            left: 0;
-            top: 0;
-            width: 250px;
-            padding: 2rem 1rem;
-        }
-
-        .sidebar .nav-link {
-            color: #a0e7ff;
-            margin: 0.5rem 0;
-            padding: 0.8rem 1rem;
-            border-radius: 10px;
-            transition: all 0.3s;
-        }
-
-        .sidebar .nav-link:hover, .sidebar .nav-link.active {
-            background: var(--hover);
-            color: var(--secondary);
-        }
-
-        .main-content {
-            margin-left: 250px;
-            padding: 2rem;
-        }
-
-        .card {
-            background: var(--card);
-            border: 1px solid rgba(0, 255, 255, 0.2);
-            border-radius: 16px;
-            overflow: hidden;
-            transition: all 0.3s;
-        }
-
-        .card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 20px rgba(0, 255, 255, 0.2);
-        }
-
-        .btn-primary {
-            background: linear-gradient(45deg, var(--primary), var(--secondary));
-            border: none;
-        }
-
-        .btn-radio {
-            background: linear-gradient(45deg, var(--secondary), var(--accent));
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            font-size: 1.1rem;
-            border-radius: 50px;
-            box-shadow: 0 4px 15px rgba(0, 255, 255, 0.4);
-            transition: all 0.3s ease;
-            margin: 1rem 0;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .radio-controls {
-            margin: 1rem 0;
-            padding: 1rem;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 12px;
-        }
-
-        .player {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 80px;
-            background: rgba(0, 0, 0, 0.9);
-            backdrop-filter: blur(10px);
-            display: flex;
-            align-items: center;
-            padding: 0 1rem;
-            z-index: 1000;
-        }
-
-        .notification {
-            position: fixed;
-            top: 20px;
-            right: -400px;
-            background: var(--success);
-            color: white;
-            padding: 1rem 2rem;
-            border-radius: 12px;
-            z-index: 2000;
-            transition: right 0.5s;
-        }
-
-        .notification.show {
-            right: 20px;
-        }
-
-        .dropzone {
-            border: 2px dashed var(--secondary);
-            border-radius: 12px;
-            padding: 30px;
-            text-align: center;
-            color: var(--secondary);
-            cursor: pointer;
-            margin: 20px 0;
-        }
-
-        /* === Carte de musique === */
-        .track-card {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 12px;
-            overflow: hidden;
-            transition: transform 0.3s, box-shadow 0.3s;
-            cursor: pointer;
-            position: relative;
-            margin: 10px 0;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 10px;
-        }
-
-        .track-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 16px rgba(0, 255, 255, 0.1);
-        }
-
-        .track-card img {
-            width: 60px;
-            height: 60px;
-            object-fit: cover;
-            border-radius: 8px;
-        }
-
-        .track-info {
-            flex: 1;
-        }
-
-        .play-btn {
-            background: linear-gradient(45deg, #00ffff, #ff1493);
-            color: white;
-            border: none;
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.9rem;
-            opacity: 0;
-            transition: opacity 0.3s;
-        }
-
-        .track-card:hover .play-btn {
-            opacity: 1;
-        }
-    </style>
 </head>
 <body>
 
@@ -231,9 +25,9 @@
 <!-- Navbar -->
 <nav class="navbar navbar-dark">
     <div class="container-fluid">
-        <a class="navbar-brand">
-            <img src="https://raw.githubusercontent.com/leonardkabo/pariszik-web/main/assets/logo-pariszik.webp" alt="Logo ParisZik">
-            <span>ParisZik</span>
+        <a class="navbar-brand d-flex align-items-center">
+            <img src="https://raw.githubusercontent.com/leonardkabo/pariszik-web/main/assets/logo-pariszik.webp" width="40" class="me-2">
+            <span style="background: linear-gradient(45deg, #ff1493, #00ffff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 800;">ParisZik</span>
         </a>
         <div class="d-flex">
             <button class="btn btn-sm btn-outline-light me-2" id="loginBtn">Connexion</button>
@@ -319,7 +113,7 @@
 
 <!-- Player -->
 <div class="player" id="player" style="display: none;">
-    <img id="playerCover" src="https://raw.githubusercontent.com/leonardkabo/pariszik-web/main/assets/default-cover.webp" width="60" class="rounded me-3" onerror="this.onerror=null;this.src='https://raw.githubusercontent.com/leonardkabo/pariszik-web/main/assets/default-cover.webp';">
+    <img id="playerCover" src="https://raw.githubusercontent.com/leonardkabo/pariszik-web/main/assets/default-cover.webp" width="60" class="rounded me-3">
     <div style="flex: 1;">
         <strong id="nowPlaying">Aucune musique</strong><br>
         <small id="nowArtist">-</small>
@@ -349,7 +143,7 @@
         // === URL des ressources publiques (GitHub) ===
         const PUBLIC_URL = 'https://raw.githubusercontent.com/leonardkabo/pariszik-web/main/assets';
         const DEFAULT_COVER = `${PUBLIC_URL}/default-cover.webp`;
-        const API_URL = 'https://pariszik-server-production.up.railway.app'; // ✅ Vérifiez cette URL
+        const API_URL = 'https://pariszik-server-production.up.railway.app';
 
         // Pages
         const home = document.getElementById('home');
@@ -379,7 +173,7 @@
                 tracks = await res.json();
                 renderAll();
             } catch (err) {
-                console.error('Erreur chargement tracks:', err);
+                console.error('Erreur chargement:', err);
                 showNotification('❌ Impossible de charger les musiques', 'error');
             }
         }
@@ -419,7 +213,7 @@
                 document.getElementById('adminLink').style.display = 'block';
                 uploadSection.style.display = 'block';
                 showPage(admin);
-                renderAdminTracks();
+                renderAdminTracks(); // ✅ Appel correct
                 setupFileInput();
                 showNotification('🔐 Accès admin autorisé');
             } else {
@@ -472,7 +266,7 @@
         // === Ajout de musique (vers le serveur) ===
         async function handleFile(file) {
             if (!file.name.endsWith('.mp3')) {
-                return showNotification('⚠️ Fichier invalide. Utilisez un .mp3', 'error');
+                return showNotification('⚠️ Fichier invalide', 'error');
             }
 
             const fileName = file.name.replace('.mp3', '').split('-').map(s => s.trim()).filter(Boolean);
@@ -490,10 +284,7 @@
                     body: formData
                 });
 
-                if (!res.ok) {
-                    const errorText = await res.text();
-                    throw new Error(`Erreur serveur: ${res.status} ${errorText}`);
-                }
+                if (!res.ok) throw new Error(await res.text());
 
                 const newTrack = await res.json();
                 tracks.unshift(newTrack);
@@ -516,10 +307,7 @@
             player.style.display = 'flex';
             audio.play().then(() => {
                 playPauseBtn.innerHTML = '<i class="fas fa-pause"></i>';
-            }).catch(err => {
-                console.error('Erreur lecture:', err);
-                showNotification('❌ Impossible de lire', 'error');
-            });
+            }).catch(() => showNotification('❌ Impossible de lire', 'error'));
         }
 
         playPauseBtn.addEventListener('click', () => {
@@ -611,38 +399,39 @@
             container.innerHTML = '';
             tracks.forEach((track, index) => {
                 const isFav = favoritesList.some(f => f.id === track.id);
-                const card = document.createElement('div');
-                card.className = 'track-card';
-                card.innerHTML = `
-                    <img src="${track.cover || DEFAULT_COVER}" onerror="this.onerror=null;this.src='${DEFAULT_COVER}';">
-                    <div class="track-info">
-                        <strong>${track.title}</strong>
-                        <small>${track.artist}</small>
-                    </div>
-                    <button class="play-btn"><i class="fas fa-play"></i></button>
+                const div = document.createElement('div');
+                div.className = 'track-item';
+                div.innerHTML = `
+                    <img class="cover-mini" src="${track.cover || DEFAULT_COVER}" onerror="this.onerror=null;this.src='${DEFAULT_COVER}';">
+                    <div style="flex: 1;">${track.title}</div>
+                    <button class="btn btn-sm btn-outline-light me-2" onclick="window.toggleFavorite(event, ${index})">
+                        <i class="${isFav ? 'fas fa-heart' : 'far fa-heart'}"></i>
+                    </button>
+                    <button class="btn btn-sm btn-primary" onclick="window.playTrack(${index})">▶️</button>
                 `;
-                card.onclick = () => window.playTrack(index);
-                container.appendChild(card);
+                container.appendChild(div);
             });
         }
 
         function renderFeatured() {
             const container = document.getElementById('featuredTracks');
             container.innerHTML = '';
-            tracks.slice(0, 3).forEach((track, index) => {
+            tracks.slice(0, 3).forEach(track => {
+                const isFav = favoritesList.some(f => f.id === track.id);
                 const col = document.createElement('div');
                 col.className = 'col-md-4 mb-4';
                 col.innerHTML = `
-                    <div class="track-card">
-                        <img src="${track.cover || DEFAULT_COVER}" onerror="this.onerror=null;this.src='${DEFAULT_COVER}';">
-                        <div class="track-info">
-                            <strong>${track.title}</strong>
-                            <small>${track.artist}</small>
+                    <div class="card" onclick="window.playTrack(${tracks.indexOf(track)})">
+                        <img src="${track.cover || DEFAULT_COVER}" onerror="this.onerror=null;this.src='${DEFAULT_COVER}';" style="height: 180px; object-fit: cover;">
+                        <div class="card-body">
+                            <h6>${track.title}</h6>
+                            <p class="text-muted">${track.artist}</p>
+                            <button class="btn btn-sm btn-outline-light" onclick="window.toggleFavorite(event, ${tracks.indexOf(track)}); event.stopPropagation();">
+                                <i class="${isFav ? 'fas fa-heart' : 'far fa-heart'}"></i>
+                            </button>
                         </div>
-                        <button class="play-btn"><i class="fas fa-play"></i></button>
                     </div>
                 `;
-                col.onclick = () => window.playTrack(index);
                 container.appendChild(col);
             });
         }
@@ -655,18 +444,39 @@
                 return;
             }
             favoritesList.forEach((track, index) => {
-                const card = document.createElement('div');
-                card.className = 'track-card';
-                card.innerHTML = `
-                    <img src="${track.cover || DEFAULT_COVER}" onerror="this.onerror=null;this.src='${DEFAULT_COVER}';">
-                    <div class="track-info">
-                        <strong>${track.title}</strong>
-                        <small>${track.artist}</small>
-                    </div>
-                    <button class="play-btn"><i class="fas fa-play"></i></button>
+                const div = document.createElement('div');
+                div.className = 'track-item';
+                div.innerHTML = `
+                    <img class="cover-mini" src="${track.cover || DEFAULT_COVER}" onerror="this.onerror=null;this.src='${DEFAULT_COVER}';">
+                    <div style="flex: 1;">${track.title}</div>
+                    <button class="btn btn-sm btn-outline-light me-2" onclick="window.removeFavorite(${index})">
+                        <i class="fas fa-heart"></i>
+                    </button>
+                    <button class="btn btn-sm btn-primary" onclick="window.playTrackFromFavorites(${index})">▶️</button>
                 `;
-                card.onclick = () => window.playTrackFromFavorites(index);
-                container.appendChild(card);
+                container.appendChild(div);
+            });
+        }
+
+        // ✅ === Fonction manquante : renderAdminTracks ===
+        function renderAdminTracks() {
+            const container = document.getElementById('adminTracksList');
+            container.innerHTML = '';
+            tracks.forEach((track, index) => {
+                const div = document.createElement('div');
+                div.className = 'card p-3 mb-2';
+                div.innerHTML = `
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <strong>${track.title}</strong> par <small>${track.artist}</small>
+                        </div>
+                        <div>
+                            <button class="btn btn-sm btn-primary me-2" onclick="window.playTrack(${index})">▶️</button>
+                            <button class="btn btn-sm btn-danger" onclick="window.deleteTrack(${index})">🗑️</button>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(div);
             });
         }
 
