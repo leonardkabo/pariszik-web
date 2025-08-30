@@ -193,6 +193,9 @@
             <a class="nav-link" href="#" data-page="library"><i class="fas fa-music"></i> Bibliothèque</a>
         </li>
         <li class="nav-item">
+            <a class="nav-link" href="#" data-page="favorites"><i class="fas fa-heart"></i> Favoris</a>
+        </li>
+        <li class="nav-item">
             <a class="nav-link" href="#" data-page="admin" style="display: none;" id="adminLink">⚙️ Admin</a>
         </li>
     </ul>
@@ -239,6 +242,13 @@
         <div id="userTracks"></div>
     </div>
 
+    <!-- Page: Favoris -->
+    <div id="favorites" style="display: none;">
+        <h2>❤️ Vos Morceaux Préférés</h2>
+        <p>Les musiques que vous avez aimées apparaîtront ici.</p>
+        <div id="favoritesList"></div>
+    </div>
+
     <!-- Page: Admin -->
     <div id="admin" style="display: none;">
         <h2>⚙️ Panel d'Administration</h2>
@@ -283,6 +293,7 @@
         // Pages
         const home = document.getElementById('home');
         const library = document.getElementById('library');
+        const favorites = document.getElementById('favorites');
         const admin = document.getElementById('admin');
         const uploadSection = document.getElementById('uploadSection');
 
@@ -298,6 +309,7 @@
         let isAdmin = false;
         let isRadioPlaying = false;
         let currentIndex = 0;
+        let favoritesList = JSON.parse(localStorage.getItem('pariszik_favorites') || '[]');
 
         // === Charger les musiques depuis le serveur ===
         async function loadTracks() {
@@ -320,8 +332,9 @@
 
         // === Afficher une page ===
         function showPage(page) {
-            [home, library, admin].forEach(p => p.style.display = 'none');
+            [home, library, favorites, admin].forEach(p => p.style.display = 'none');
             page.style.display = 'block';
+            if (page === favorites) renderFavorites();
         }
 
         document.querySelectorAll('[data-page]').forEach(link => {
@@ -424,8 +437,7 @@
                 tracks.unshift(newTrack);
                 showNotification(`✅ "${title}" ajouté !`);
 
-                // ✅ Proposer de jouer (contourne le blocage du navigateur)
-                if (confirm(`"${title}" a été ajouté. Voulez-vous l'écouter maintenant ?`)) {
+                if (confirm(`"${title}" ajouté ! Voulez-vous l'écouter maintenant ?`)) {
                     playTrack(newTrack);
                 }
 
@@ -438,7 +450,8 @@
 
         // === Lecteur ===
         function playTrack(track) {
-            audio.src = track.fileURL;
+            const audioURL = new URL(track.fileURL, API_URL).href;
+            audio.src = audioURL;
             nowPlaying.textContent = track.title;
             nowArtist.textContent = track.artist;
             playerCover.src = track.cover;
@@ -447,18 +460,37 @@
                 playPauseBtn.innerHTML = '<i class="fas fa-pause"></i>';
             }).catch(err => {
                 console.error('Erreur lecture:', err);
-                showNotification('❌ Impossible de lire le fichier', 'error');
+                showNotification('❌ Impossible de lire', 'error');
             });
         }
 
         playPauseBtn.addEventListener('click', () => {
             if (audio.paused) {
-                audio.play().catch(() => showNotification('❌ Échec lecture', 'error'));
+                audio.play().catch(() => showNotification('❌ Échec', 'error'));
                 playPauseBtn.innerHTML = '<i class="fas fa-pause"></i>';
             } else {
                 audio.pause();
                 playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
             }
+        });
+
+        // === Bouton Cœur (Favoris) ===
+        likeBtn.addEventListener('click', () => {
+            const currentTrack = tracks.find(t => t.fileURL === audio.src);
+            if (!currentTrack) return;
+
+            const isFav = favoritesList.some(f => f.id === currentTrack.id);
+            if (isFav) {
+                favoritesList = favoritesList.filter(f => f.id !== currentTrack.id);
+                likeBtn.innerHTML = '<i class="far fa-heart"></i>';
+                showNotification('🎵 Retiré des favoris');
+            } else {
+                favoritesList.push(currentTrack);
+                likeBtn.innerHTML = '<i class="fas fa-heart"></i>';
+                showNotification('❤️ Ajouté aux favoris');
+            }
+            localStorage.setItem('pariszik_favorites', JSON.stringify(favoritesList));
+            renderFavorites();
         });
 
         // === Radio Automatique ===
@@ -513,17 +545,22 @@
             renderTracks();
             renderFeatured();
             if (isAdmin) renderAdminTracks();
+            renderFavorites();
         }
 
         function renderTracks() {
             const container = document.getElementById('userTracks');
             container.innerHTML = '';
             tracks.forEach((track, index) => {
+                const isFav = favoritesList.some(f => f.id === track.id);
                 const div = document.createElement('div');
                 div.className = 'track-item';
                 div.innerHTML = `
                     <img class="cover-mini" src="${track.cover}" onerror="this.onerror=null;this.src='assets/default-cover.jpg';">
                     <div style="flex: 1;">${track.title}</div>
+                    <button class="btn btn-sm btn-outline-light me-2" onclick="window.toggleFavorite(event, ${index})">
+                        <i class="${isFav ? 'fas fa-heart' : 'far fa-heart'}"></i>
+                    </button>
                     <button class="btn btn-sm btn-primary" onclick="window.playTrack(${index})">▶️</button>
                 `;
                 container.appendChild(div);
@@ -534,6 +571,7 @@
             const container = document.getElementById('featuredTracks');
             container.innerHTML = '';
             tracks.slice(0, 3).forEach(track => {
+                const isFav = favoritesList.some(f => f.id === track.id);
                 const col = document.createElement('div');
                 col.className = 'col-md-4 mb-4';
                 col.innerHTML = `
@@ -542,6 +580,9 @@
                         <div class="card-body">
                             <h6>${track.title}</h6>
                             <p class="text-muted">${track.artist}</p>
+                            <button class="btn btn-sm btn-outline-light" onclick="window.toggleFavorite(event, ${tracks.indexOf(track)}); event.stopPropagation();">
+                                <i class="${isFav ? 'fas fa-heart' : 'far fa-heart'}"></i>
+                            </button>
                         </div>
                     </div>
                 `;
@@ -549,22 +590,23 @@
             });
         }
 
-        function renderAdminTracks() {
-            const container = document.getElementById('adminTracksList');
+        function renderFavorites() {
+            const container = document.getElementById('favoritesList');
             container.innerHTML = '';
-            tracks.forEach((track, index) => {
+            if (favoritesList.length === 0) {
+                container.innerHTML = '<p>Aucun favori pour le moment.</p>';
+                return;
+            }
+            favoritesList.forEach((track, index) => {
                 const div = document.createElement('div');
-                div.className = 'card p-3 mb-2';
+                div.className = 'track-item';
                 div.innerHTML = `
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <strong>${track.title}</strong> par <small>${track.artist}</small>
-                        </div>
-                        <div>
-                            <button class="btn btn-sm btn-primary me-2" onclick="window.playTrack(${index})">▶️</button>
-                            <button class="btn btn-sm btn-danger" onclick="window.deleteTrack(${index})">🗑️</button>
-                        </div>
-                    </div>
+                    <img class="cover-mini" src="${track.cover}" onerror="this.onerror=null;this.src='assets/default-cover.jpg';">
+                    <div style="flex: 1;">${track.title}</div>
+                    <button class="btn btn-sm btn-outline-light me-2" onclick="window.removeFavorite(${index})">
+                        <i class="fas fa-heart"></i>
+                    </button>
+                    <button class="btn btn-sm btn-primary" onclick="window.playTrackFromFavorites(${index})">▶️</button>
                 `;
                 container.appendChild(div);
             });
@@ -574,9 +616,49 @@
         window.playTrack = function(index) {
             stopRadio();
             const track = tracks[index];
-            if (track) playTrack(track);
-            else showNotification('❌ Morceau introuvable', 'error');
+            if (track) {
+                playTrack(track);
+                updateLikeButton(track);
+            } else {
+                showNotification('❌ Morceau introuvable', 'error');
+            }
         };
+
+        window.playTrackFromFavorites = function(index) {
+            const track = favoritesList[index];
+            if (track) {
+                playTrack(track);
+                updateLikeButton(track);
+            }
+        };
+
+        window.toggleFavorite = function(event, index) {
+            event.stopPropagation();
+            const track = tracks[index];
+            const isFav = favoritesList.some(f => f.id === track.id);
+            if (isFav) {
+                favoritesList = favoritesList.filter(f => f.id !== track.id);
+                showNotification('🎵 Retiré des favoris');
+            } else {
+                favoritesList.push(track);
+                showNotification('❤️ Ajouté aux favoris');
+            }
+            localStorage.setItem('pariszik_favorites', JSON.stringify(favoritesList));
+            renderAll();
+        };
+
+        window.removeFavorite = function(index) {
+            const track = favoritesList[index];
+            favoritesList.splice(index, 1);
+            localStorage.setItem('pariszik_favorites', JSON.stringify(favoritesList));
+            renderFavorites();
+            showNotification('🗑️ Retiré des favoris');
+        };
+
+        function updateLikeButton(track) {
+            const isFav = favoritesList.some(f => f.id === track.id);
+            likeBtn.innerHTML = isFav ? '<i class="fas fa-heart"></i>' : '<i class="far fa-heart"></i>';
+        }
 
         window.deleteTrack = async function(index) {
             if (confirm(`Supprimer "${tracks[index].title}" ?`)) {
