@@ -23,7 +23,7 @@
             --secondary: #00ffff;
             --accent: #ffff00;
             --dark: #0f0c29;
-            --card: rgba(255, 255, 255, 0.8);
+            --card: rgba(30, 25, 60, 0.8);
             --hover: rgba(0, 255, 255, 0.1);
             --success: #32cd32;
             --danger: #ff4500;
@@ -92,8 +92,9 @@
             padding: 2rem;
         }
 
+        /* === Carte de musique (comme sur l'image) === */
         .card {
-            background: var(--card);
+            background: rgba(255, 255, 255, 0.05);
             border: 1px solid rgba(0, 255, 255, 0.2);
             border-radius: 16px;
             overflow: hidden;
@@ -105,9 +106,39 @@
             box-shadow: 0 10px 20px rgba(0, 255, 255, 0.2);
         }
 
-        .btn-primary {
-            background: linear-gradient(45deg, var(--primary), var(--secondary));
-            border: none;
+        .card-img-top {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 16px 16px 0 0;
+        }
+
+        .card-body {
+            padding: 1rem;
+            background: #121212;
+            color: white;
+        }
+
+        .btn-outline-light {
+            background: transparent;
+            border: 1px solid #00ffff;
+            color: #00ffff;
+            font-size: 0.9rem;
+            border-radius: 8px;
+        }
+
+        .btn-outline-light:hover {
+            background: #00ffff;
+            color: black;
+        }
+
+        .btn-link {
+            text-decoration: none;
+            color: white;
+        }
+
+        .btn-link i {
+            font-size: 1.2rem;
         }
 
         .btn-radio {
@@ -160,83 +191,6 @@
 
         .notification.show {
             right: 20px;
-        }
-
-        .dropzone {
-            border: 2px dashed var(--secondary);
-            border-radius: 12px;
-            padding: 30px;
-            text-align: center;
-            color: var(--secondary);
-            cursor: pointer;
-            margin: 20px 0;
-        }
-
-        .track-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 10px;
-            background: rgba(255, 255, 255, 0.05);
-            margin: 10px 0;
-            border-radius: 8px;
-        }
-
-        .cover-mini {
-            width: 40px;
-            height: 40px;
-            object-fit: cover;
-            border-radius: 6px;
-        }
-
-        /* === Carte de musique === */
-        .track-card {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 12px;
-            overflow: hidden;
-            transition: transform 0.3s, box-shadow 0.3s;
-            cursor: pointer;
-            position: relative;
-            margin: 10px 0;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 10px;
-        }
-
-        .track-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 16px rgba(0, 255, 255, 0.1);
-        }
-
-        .track-card img {
-            width: 60px;
-            height: 60px;
-            object-fit: cover;
-            border-radius: 8px;
-        }
-
-        .track-info {
-            flex: 1;
-        }
-
-        .play-btn {
-            background: linear-gradient(45deg, #00ffff, #ff1493);
-            color: white;
-            border: none;
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.9rem;
-            opacity: 0;
-            transition: opacity 0.3s;
-        }
-
-        .track-card:hover .play-btn {
-            opacity: 1;
         }
     </style>
 </head>
@@ -302,6 +256,7 @@
             </button>
         </div>
 
+        <!-- === Cartes Musique (comme sur l'image) === -->
         <div class="row mt-4" id="featuredTracks"></div>
     </div>
 
@@ -639,18 +594,17 @@
             container.innerHTML = '';
             tracks.forEach((track, index) => {
                 const isFav = favoritesList.some(f => f.id === track.id);
-                const card = document.createElement('div');
-                card.className = 'track-card';
-                card.innerHTML = `
-                    <img src="${track.cover || DEFAULT_COVER}" onerror="this.onerror=null;this.src='${DEFAULT_COVER}';">
-                    <div class="track-info">
-                        <strong>${track.title}</strong>
-                        <small>${track.artist}</small>
-                    </div>
-                    <button class="play-btn" onclick="window.playTrack(${index}); event.stopPropagation();"><i class="fas fa-play"></i></button>
+                const div = document.createElement('div');
+                div.className = 'track-item';
+                div.innerHTML = `
+                    <img class="cover-mini" src="${track.cover || DEFAULT_COVER}" onerror="this.onerror=null;this.src='${DEFAULT_COVER}';">
+                    <div style="flex: 1;">${track.title}</div>
+                    <button class="btn btn-sm btn-outline-light me-2" onclick="window.toggleFavorite(event, ${index})">
+                        <i class="${isFav ? 'fas fa-heart' : 'far fa-heart'}"></i>
+                    </button>
+                    <button class="btn btn-sm btn-primary" onclick="window.playTrack(${index})">▶️</button>
                 `;
-                card.onclick = () => window.playTrack(index);
-                container.appendChild(card);
+                container.appendChild(div);
             });
         }
 
@@ -658,19 +612,26 @@
             const container = document.getElementById('featuredTracks');
             container.innerHTML = '';
             tracks.slice(0, 3).forEach((track, index) => {
+                const isFav = favoritesList.some(f => f.id === track.id);
                 const col = document.createElement('div');
                 col.className = 'col-md-4 mb-4';
                 col.innerHTML = `
-                    <div class="track-card">
-                        <img src="${track.cover || DEFAULT_COVER}" onerror="this.onerror=null;this.src='${DEFAULT_COVER}';">
-                        <div class="track-info">
-                            <strong>${track.title}</strong>
-                            <small>${track.artist}</small>
+                    <div class="card h-100 shadow-lg border-0 rounded-3 overflow-hidden">
+                        <img src="${track.cover || DEFAULT_COVER}" class="card-img-top" alt="Pochette">
+                        <div class="card-body p-3 bg-dark text-white">
+                            <h5 class="card-title">${track.title}</h5>
+                            <small class="text-muted">${track.artist}</small>
+                            <div class="d-flex justify-content-between align-items-center mt-2">
+                                <button class="btn btn-outline-light btn-sm px-3" onclick="window.playTrack(${index})">
+                                    <i class="fas fa-play"></i> Écouter
+                                </button>
+                                <button class="btn btn-link text-white p-0" onclick="window.toggleFavorite(${index})">
+                                    <i class="${isFav ? 'fas fa-heart' : 'far fa-heart'}"></i>
+                                </button>
+                            </div>
                         </div>
-                        <button class="play-btn" onclick="window.playTrack(${index}); event.stopPropagation();"><i class="fas fa-play"></i></button>
                     </div>
                 `;
-                col.onclick = () => window.playTrack(index);
                 container.appendChild(col);
             });
         }
@@ -683,22 +644,20 @@
                 return;
             }
             favoritesList.forEach((track, index) => {
-                const card = document.createElement('div');
-                card.className = 'track-card';
-                card.innerHTML = `
-                    <img src="${track.cover || DEFAULT_COVER}" onerror="this.onerror=null;this.src='${DEFAULT_COVER}';">
-                    <div class="track-info">
-                        <strong>${track.title}</strong>
-                        <small>${track.artist}</small>
-                    </div>
-                    <button class="play-btn" onclick="window.playTrackFromFavorites(${index}); event.stopPropagation();"><i class="fas fa-play"></i></button>
+                const div = document.createElement('div');
+                div.className = 'track-item';
+                div.innerHTML = `
+                    <img class="cover-mini" src="${track.cover || DEFAULT_COVER}" onerror="this.onerror=null;this.src='${DEFAULT_COVER}';">
+                    <div style="flex: 1;">${track.title}</div>
+                    <button class="btn btn-sm btn-outline-light me-2" onclick="window.removeFavorite(${index})">
+                        <i class="fas fa-heart"></i>
+                    </button>
+                    <button class="btn btn-sm btn-primary" onclick="window.playTrackFromFavorites(${index})">▶️</button>
                 `;
-                card.onclick = () => window.playTrackFromFavorites(index);
-                container.appendChild(card);
+                container.appendChild(div);
             });
         }
 
-        // === Fonction manquante : renderAdminTracks ===
         function renderAdminTracks() {
             const container = document.getElementById('adminTracksList');
             container.innerHTML = '';
@@ -742,7 +701,7 @@
             }
         };
 
-        window.toggleFavorite = function(event, index) {
+        window.toggleFavorite = function(index) {
             event.stopPropagation();
             const track = tracks[index];
             const isFav = favoritesList.some(f => f.id === track.id);
