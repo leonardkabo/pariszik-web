@@ -354,6 +354,13 @@
             try {
                 const res = await fetch(`${API_URL}/api/tracks`);
                 tracks = await res.json();
+
+                // ✅ Forcer un cover valide pour chaque track
+                tracks = tracks.map(track => ({
+                    ...track,
+                    cover: track.cover || DEFAULT_COVER
+                }));
+
                 renderAll();
             } catch (err) {
                 console.error('Erreur chargement tracks:', err);
@@ -470,6 +477,7 @@
                 if (!res.ok) throw new Error(await res.text());
 
                 const newTrack = await res.json();
+                newTrack.cover = newTrack.cover || DEFAULT_COVER;
                 tracks.unshift(newTrack);
                 showNotification(`✅ "${title}" ajouté !`);
                 renderAll();
@@ -600,7 +608,7 @@
                 const card = document.createElement('div');
                 card.className = 'card h-100 shadow-lg border-0 rounded-3 overflow-hidden';
                 card.innerHTML = `
-                    <img src="${track.cover || DEFAULT_COVER}" class="card-img-top" alt="Pochette">
+                    <img src="${track.cover}" class="card-img-top" alt="Pochette">
                     <div class="card-body p-3 bg-dark text-white">
                         <h5 class="card-title">${track.title}</h5>
                         <small class="text-muted">${track.artist}</small>
@@ -628,7 +636,7 @@
                 col.className = 'col-md-4 mb-4';
                 col.innerHTML = `
                     <div class="card h-100 shadow-lg border-0 rounded-3 overflow-hidden">
-                        <img src="${track.cover || DEFAULT_COVER}" class="card-img-top" alt="Pochette">
+                        <img src="${track.cover}" class="card-img-top" alt="Pochette">
                         <div class="card-body p-3 bg-dark text-white">
                             <h5 class="card-title">${track.title}</h5>
                             <small class="text-muted">${track.artist}</small>
@@ -658,7 +666,7 @@
                 const card = document.createElement('div');
                 card.className = 'card h-100 shadow-lg border-0 rounded-3 overflow-hidden';
                 card.innerHTML = `
-                    <img src="${track.cover || DEFAULT_COVER}" class="card-img-top" alt="Pochette">
+                    <img src="${track.cover}" class="card-img-top" alt="Pochette">
                     <div class="card-body p-3 bg-dark text-white">
                         <h5 class="card-title">${track.title}</h5>
                         <small class="text-muted">${track.artist}</small>
