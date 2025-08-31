@@ -226,9 +226,6 @@
             <a class="nav-link" href="#" data-page="library"><i class="fas fa-music"></i> Bibliothèque</a>
         </li>
         <li class="nav-item">
-            <a class="nav-link" href="#" data-page="favorites"><i class="fas fa-heart"></i> Favoris</a>
-        </li>
-        <li class="nav-item">
             <a class="nav-link" href="#" data-page="admin" style="display: none;" id="adminLink">⚙️ Admin</a>
         </li>
     </ul>
@@ -267,20 +264,36 @@
     <div id="library" style="display: none;">
         <h2>📚 Votre Bibliothèque</h2>
         <!-- Upload section (admin only) -->
-        <div id="uploadSection" style="display: none;">
-            <div class="dropzone" id="dropzone">
-                <i class="fas fa-music"></i> Glissez un fichier .mp3 ici
-                <input type="file" id="fileInput" accept="audio/*" style="display: none;">
-            </div>
-        </div>
-        <div id="userTracks"></div>
-    </div>
+        <div id="uploadSection" style="display: none; padding: 20px; margin: 20px 0; border: 2px dashed var(--secondary); border-radius: 16px; background: rgba(0, 255, 255, 0.05);">
+            <h4>📤 Ajouter un nouveau morceau</h4>
+            <p>Glissez ou sélectionnez un fichier audio (.mp3) et une pochette (.jpg, .png, .webp)</p>
 
-    <!-- Page: Favoris -->
-    <div id="favorites" style="display: none;">
-        <h2>❤️ Vos Morceaux Préférés</h2>
-        <p>Les musiques que vous avez aimées apparaîtront ici.</p>
-        <div id="favoritesList"></div>
+            <!-- Upload Audio -->
+            <div class="mb-3">
+                <label for="audioFile" class="form-label">🎵 Fichier audio</label>
+                <input type="file" class="form-control" id="audioFile" accept="audio/*" required>
+            </div>
+
+            <!-- Upload Cover -->
+            <div class="mb-3">
+                <label for="coverFile" class="form-label">🖼️ Pochette (optionnel)</label>
+                <input type="file" class="form-control" id="coverFile" accept="image/*">
+            </div>
+
+            <!-- Preview Cover -->
+            <div class="mb-3" id="coverPreviewContainer" style="display: none;">
+                <label>🎨 Aperçu de la pochette</label>
+                <br>
+                <img id="coverPreview" src="" width="120" height="120" style="border-radius: 12px; object-fit: cover; border: 2px solid var(--secondary);">
+            </div>
+
+            <!-- Bouton Envoyer -->
+            <button class="btn btn-primary w-100 mt-3" id="uploadBtn">
+                <i class="fas fa-upload"></i> Ajouter à la bibliothèque
+            </button>
+        </div>
+
+        <div id="userTracks"></div>
     </div>
 
     <!-- Page: Admin -->
@@ -319,8 +332,6 @@
         const prevBtn = document.getElementById('prevBtn');
         const nextBtn = document.getElementById('nextBtn');
         const notification = document.getElementById('notification');
-        const dropzone = document.getElementById('dropzone');
-        const fileInput = document.getElementById('fileInput');
         const logoutAdmin = document.getElementById('logoutAdmin');
 
         // === URL des ressources locales ===
@@ -331,7 +342,6 @@
         // Pages
         const home = document.getElementById('home');
         const library = document.getElementById('library');
-        const favorites = document.getElementById('favorites');
         const admin = document.getElementById('admin');
         const uploadSection = document.getElementById('uploadSection');
 
@@ -378,9 +388,8 @@
 
         // === Afficher une page ===
         function showPage(page) {
-            [home, library, favorites, admin].forEach(p => p.style.display = 'none');
+            [home, library, admin].forEach(p => p.style.display = 'none');
             page.style.display = 'block';
-            if (page === favorites) renderFavorites();
         }
 
         document.querySelectorAll('[data-page]').forEach(link => {
@@ -420,72 +429,68 @@
             showNotification('Déconnexion admin');
         });
 
-        // === Gestion du fichier (uniquement si admin) ===
+        // === Gestion de l'upload (audio + cover) ===
         function setupFileInput() {
-            fileInput.onchange = null;
-            dropzone.onclick = () => fileInput.click();
+            const audioFile = document.getElementById('audioFile');
+            const coverFile = document.getElementById('coverFile');
+            const coverPreview = document.getElementById('coverPreview');
+            const coverPreviewContainer = document.getElementById('coverPreviewContainer');
+            const uploadBtn = document.getElementById('uploadBtn');
 
-            ['dragover', 'dragenter'].forEach(evt => {
-                dropzone.addEventListener(evt, e => {
-                    e.preventDefault();
-                    if (isAdmin) dropzone.style.borderColor = 'var(--accent)';
-                });
-            });
-
-            ['dragleave', 'dragend'].forEach(evt => {
-                dropzone.addEventListener(evt, () => {
-                    if (isAdmin) dropzone.style.borderColor = 'var(--secondary)';
-                });
-            });
-
-            dropzone.addEventListener('drop', e => {
-                e.preventDefault();
-                if (isAdmin && e.dataTransfer.files[0]) {
-                    dropzone.style.borderColor = 'var(--secondary)';
-                    handleFile(e.dataTransfer.files[0]);
-                }
-            });
-
-            fileInput.onchange = (e) => {
-                if (isAdmin && e.target.files[0]) {
-                    handleFile(e.target.files[0]);
+            // Aperçu de la cover
+            coverFile.onchange = () => {
+                const file = coverFile.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = () => {
+                        coverPreview.src = reader.result;
+                        coverPreviewContainer.style.display = 'block';
+                    };
+                    reader.readAsDataURL(file);
                 }
             };
-        }
 
-        // === Ajout de musique (vers le serveur) ===
-        async function handleFile(file) {
-            if (!file.name.endsWith('.mp3')) {
-                return showNotification('⚠️ Fichier invalide', 'error');
-            }
+            // Bouton Ajouter
+            uploadBtn.onclick = async () => {
+                const audio = audioFile.files[0];
+                const cover = coverFile.files[0];
 
-            const fileName = file.name.replace('.mp3', '').split('-').map(s => s.trim()).filter(Boolean);
-            const title = fileName.length > 0 ? fileName[0] : file.name.replace('.mp3', '');
-            const artist = fileName.length > 1 ? fileName[1] : 'Inconnu';
+                if (!audio || !audio.name.endsWith('.mp3')) {
+                    return showNotification('⚠️ Veuillez sélectionner un fichier .mp3', 'error');
+                }
 
-            const formData = new FormData();
-            formData.append('audio', file);
-            formData.append('title', title);
-            formData.append('artist', artist);
+                const formData = new FormData();
+                formData.append('audio', audio);
+                formData.append('title', audio.name.replace('.mp3', '').split('-')[0] || 'Sans titre');
+                formData.append('artist', audio.name.replace('.mp3', '').split('-')[1] || 'Inconnu');
 
-            try {
-                const res = await fetch(`${API_URL}/api/admin/add`, {
-                    method: 'POST',
-                    body: formData
-                });
+                if (cover) {
+                    formData.append('cover', cover);
+                }
 
-                if (!res.ok) throw new Error(await res.text());
+                try {
+                    const res = await fetch(`${API_URL}/api/admin/add`, {
+                        method: 'POST',
+                        body: formData
+                    });
 
-                const newTrack = await res.json();
-                newTrack.cover = newTrack.cover || DEFAULT_COVER;
-                tracks.unshift(newTrack);
-                showNotification(`✅ "${title}" ajouté !`);
-                renderAll();
-                playTrack(newTrack);
-            } catch (err) {
-                console.error('Erreur upload:', err);
-                showNotification(`❌ Échec: ${err.message}`, 'error');
-            }
+                    if (!res.ok) throw new Error(await res.text());
+
+                    const newTrack = await res.json();
+                    tracks.unshift(newTrack);
+                    showNotification(`✅ "${newTrack.title}" ajouté !`);
+                    renderAll();
+
+                    // Reset
+                    audioFile.value = '';
+                    coverFile.value = '';
+                    coverPreviewContainer.style.display = 'none';
+
+                } catch (err) {
+                    console.error('Erreur upload:', err);
+                    showNotification(`❌ Échec: ${err.message}`, 'error');
+                }
+            };
         }
 
         // === Lecteur ===
