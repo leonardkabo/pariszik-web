@@ -229,6 +229,9 @@
             <a class="nav-link" href="#" data-page="favorites"><i class="fas fa-heart"></i> Favoris</a>
         </li>
         <li class="nav-item">
+            <a class="nav-link" href="#" data-page="artists"><i class="fas fa-microphone-alt"></i> Artistes</a>
+        </li>
+        <li class="nav-item">
             <a class="nav-link" href="#" data-page="admin" style="display: none;" id="adminLink">⚙️ Admin</a>
         </li>
     </ul>
@@ -259,7 +262,7 @@
             </button>
         </div>
 
-        <!-- === Cartes Musique (avec lien vers l'artiste) === -->
+        <!-- === Cartes Musique (comme sur l'image) === -->
         <div class="row mt-4" id="featuredTracks"></div>
     </div>
 
@@ -283,10 +286,28 @@
         <div id="favoritesList"></div>
     </div>
 
+    <!-- Page: Artistes -->
+    <div id="artists" style="display: none;">
+        <h2>🧑‍🎨 Découvrez les Artistes</h2>
+        <p>Les voix qui font vibrer Paris.</p>
+        <div id="artistsList"></div>
+    </div>
+
     <!-- Page: Admin -->
     <div id="admin" style="display: none;">
         <h2>⚙️ Panel d'Administration</h2>
         <button class="btn btn-danger mt-3" id="logoutAdmin">Déconnexion</button>
+
+        <h4 class="mt-4">➕ Ajouter un Artiste</h4>
+        <form id="addArtistForm">
+            <input type="text" class="form-control mb-2" id="artistName" placeholder="Nom de l'artiste" required>
+            <input type="text" class="form-control mb-2" id="artistGenre" placeholder="Genre">
+            <textarea class="form-control mb-2" id="artistBio" placeholder="Biographie"></textarea>
+            <input type="text" class="form-control mb-2" id="artistImage" placeholder="URL de l'image">
+            <input type="text" class="form-control mb-2" id="artistCover" placeholder="URL de la bannière">
+            <button type="submit" class="btn btn-success">Ajouter</button>
+        </form>
+
         <h4 class="mt-4">🗂️ Gestion des Musiques</h4>
         <div id="adminTracksList"></div>
     </div>
@@ -323,7 +344,7 @@
         const fileInput = document.getElementById('fileInput');
         const logoutAdmin = document.getElementById('logoutAdmin');
 
-        // === URL des ressources locales (car maintenant dans le même repo) ===
+        // === URL des ressources locales ===
         const PUBLIC_URL = 'assets';
         const DEFAULT_COVER = `${PUBLIC_URL}/default-cover.webp`;
         const API_URL = 'https://pariszik-server-production.up.railway.app';
@@ -332,6 +353,7 @@
         const home = document.getElementById('home');
         const library = document.getElementById('library');
         const favorites = document.getElementById('favorites');
+        const artists = document.getElementById('artists');
         const admin = document.getElementById('admin');
         const uploadSection = document.getElementById('uploadSection');
 
@@ -344,6 +366,7 @@
 
         // Données
         let tracks = [];
+        let artistsList = [];
         let isAdmin = false;
         let isRadioPlaying = false;
         let currentIndex = 0;
@@ -355,7 +378,7 @@
                 const res = await fetch(`${API_URL}/api/tracks`);
                 tracks = await res.json();
 
-                // ✅ Forcer un cover valide
+                // Forcer un cover valide
                 tracks = tracks.map(track => ({
                     ...track,
                     cover: track.cover || DEFAULT_COVER
@@ -365,6 +388,17 @@
             } catch (err) {
                 console.error('Erreur chargement tracks:', err);
                 showNotification('❌ Impossible de charger les musiques', 'error');
+            }
+        }
+
+        // === Charger les artistes ===
+        async function loadArtists() {
+            try {
+                const res = await fetch(`${API_URL}/api/artists`);
+                artistsList = await res.json();
+                renderArtists();
+            } catch (err) {
+                console.error('Erreur chargement artistes:', err);
             }
         }
 
@@ -378,9 +412,10 @@
 
         // === Afficher une page ===
         function showPage(page) {
-            [home, library, favorites, admin].forEach(p => p.style.display = 'none');
+            [home, library, favorites, artists, admin].forEach(p => p.style.display = 'none');
             page.style.display = 'block';
             if (page === favorites) renderFavorites();
+            if (page === artists) renderArtists();
         }
 
         document.querySelectorAll('[data-page]').forEach(link => {
@@ -620,13 +655,6 @@
                                 <i class="${isFav ? 'fas fa-heart' : 'far fa-heart'}"></i>
                             </button>
                         </div>
-                        <div class="mt-2">
-                            <small>
-                                <a href="artiste.html?nom=zola" style="color: var(--secondary); text-decoration: none;">
-                                    ▶️ Voir Zola
-                                </a>
-                            </small>
-                        </div>
                     </div>
                 `;
                 card.onclick = () => window.playTrack(index);
@@ -654,13 +682,6 @@
                                 <button class="btn btn-link text-white p-0" onclick="window.toggleFavorite(${index})">
                                     <i class="${isFav ? 'fas fa-heart' : 'far fa-heart'}"></i>
                                 </button>
-                            </div>
-                            <div class="mt-2">
-                                <small>
-                                    <a href="artiste.html?nom=zola" style="color: var(--secondary); text-decoration: none;">
-                                        ▶️ Voir Zola
-                                    </a>
-                                </small>
                             </div>
                         </div>
                     </div>
@@ -692,18 +713,44 @@
                                 <i class="fas fa-heart"></i>
                             </button>
                         </div>
-                        <div class="mt-2">
-                            <small>
-                                <a href="artiste.html?nom=zola" style="color: var(--secondary); text-decoration: none;">
-                                    ▶️ Voir Zola
-                                </a>
-                            </small>
-                        </div>
                     </div>
                 `;
                 card.onclick = () => window.playTrackFromFavorites(index);
                 container.appendChild(card);
             });
+        }
+
+        function renderArtists() {
+            const container = document.getElementById('artistsList');
+            container.innerHTML = '<p>Chargement des artistes...</p>';
+
+            try {
+                const res = await fetch(`${API_URL}/api/artists`);
+                const artists = await res.json();
+
+                container.innerHTML = '';
+                artists.forEach(artist => {
+                    const div = document.createElement('div');
+                    div.className = 'card mb-3';
+                    div.innerHTML = `
+                        <div class="row g-0">
+                            <div class="col-3">
+                                <img src="${artist.image || DEFAULT_COVER}" class="img-fluid rounded-start" style="width: 100px; height: 100px; object-fit: cover; margin: 10px;">
+                            </div>
+                            <div class="col-9">
+                                <div class="card-body">
+                                    <h5 class="card-title">${artist.name}</h5>
+                                    <p class="card-text">${artist.genre || 'Inconnu'}</p>
+                                    <a href="artiste.html?id=${artist._id}" class="btn btn-sm btn-primary">Voir l'artiste</a>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    container.appendChild(div);
+                });
+            } catch (err) {
+                container.innerHTML = '<p>❌ Impossible de charger les artistes.</p>';
+            }
         }
 
         function renderAdminTracks() {
@@ -790,8 +837,33 @@
             }
         };
 
+        // === Formulaire ajout artiste ===
+        document.getElementById('addArtistForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const data = {
+                name: document.getElementById('artistName').value,
+                genre: document.getElementById('artistGenre').value,
+                bio: document.getElementById('artistBio').value,
+                image: document.getElementById('artistImage').value || DEFAULT_COVER,
+                cover: document.getElementById('artistCover').value || DEFAULT_COVER
+            };
+
+            try {
+                await fetch(`${API_URL}/api/admin/artist/add`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                showNotification('✅ Artiste ajouté !');
+                document.getElementById('addArtistForm').reset();
+                loadArtists();
+            } catch (err) {
+                showNotification('❌ Échec', 'error');
+            }
+        });
+
         // === Chargement initial ===
-        await loadTracks();
+        await Promise.all([loadTracks(), loadArtists()]);
         showPage(home);
     });
 </script>
