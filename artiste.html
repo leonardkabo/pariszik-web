@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎤 Artiste - ParisZik</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+    <!-- === PWA & Favicon === -->
+    <link rel="icon" href="assets/favicon.webp" type="image/webp">
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#00ffff">
+
+    <style>
+        :root {
+            --primary: #ff1493;
+            --secondary: #00ffff;
+            --dark: #0f0c29;
+            --card: rgba(30, 25, 60, 0.8);
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--dark), #1a1a3a, #24243e);
+            color: white;
+            min-height: 100vh;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        .navbar {
+            backdrop-filter: blur(10px);
+            background: rgba(15, 12, 41, 0.95);
+            border-bottom: 1px solid var(--secondary);
+        }
+
+        .navbar-brand {
+            display: flex;
+            align-items: center;
+            font-weight: 800;
+        }
+
+        .navbar-brand img {
+            width: 40px;
+            height: 40px;
+            margin-right: 10px;
+            border-radius: 8px;
+        }
+
+        .navbar-brand span {
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .back-btn {
+            background: transparent;
+            border: 1px solid var(--secondary);
+            color: var(--secondary);
+            margin-right: 10px;
+        }
+
+        .back-btn:hover {
+            background: var(--secondary);
+            color: black;
+        }
+
+        .artist-header {
+            text-align: center;
+            padding: 2rem 1rem;
+            margin-bottom: 2rem;
+            background: rgba(0, 255, 255, 0.05);
+            border-radius: 16px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .artist-img {
+            width: 150px;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 50%;
+            border: 5px solid var(--secondary);
+            margin-bottom: 1rem;
+        }
+
+        .btn-radio {
+            background: linear-gradient(45deg, var(--secondary), #ffff00);
+            border: none;
+            padding: 12px 24px;
+            font-size: 1.1rem;
+            border-radius: 50px;
+            box-shadow: 0 4px 15px rgba(0, 255, 255, 0.4);
+        }
+
+        .track-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            margin: 10px 0;
+            border-radius: 8px;
+        }
+
+        .cover-mini {
+            width: 50px;
+            height: 50px;
+            object-fit: cover;
+            border-radius: 6px;
+        }
+
+        .player {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 80px;
+            background: rgba(0, 0, 0, 0.9);
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            padding: 0 1rem;
+            z-index: 1000;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: -400px;
+            background: #32cd32;
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 12px;
+            z-index: 2000;
+            transition: right 0.5s;
+        }
+
+        .notification.show {
+            right: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<!-- Notification -->
+<div id="notification" class="notification">Artiste ajouté à vos suivis !</div>
+
+<!-- Navbar -->
+<nav class="navbar navbar-dark">
+    <div class="container-fluid">
+        <div class="d-flex align-items-center">
+            <a href="index.html" class="btn back-btn me-2">
+                <i class="fas fa-arrow-left"></i>
+            </a>
+            <a class="navbar-brand" href="index.html">
+                <img src="assets/logo-pariszik.webp" alt="Logo ParisZik">
+                <span>ParisZik</span>
+            </a>
+        </div>
+        <button class="btn btn-primary" id="followBtn">❤️ Suivre</button>
+    </div>
+</nav>
+
+<!-- Header Artiste -->
+<div class="container mt-4">
+    <div class="artist-header">
+        <img id="artistImg" src="assets/default-cover.webp" class="artist-img" alt="Photo de l'artiste">
+        <h1 id="artistName">Chargement...</h1>
+        <p id="artistGenre">-</p>
+        <button class="btn btn-radio" id="playMixBtn">
+            <i class="fas fa-play"></i> Écouter un mix
+        </button>
+    </div>
+
+    <div class="mb-4">
+        <h4>📄 Biographie</h4>
+        <p id="artistBio">Chargement de la biographie...</p>
+    </div>
+
+    <h4>🎵 Ses morceaux</h4>
+    <div id="artistTracks"></div>
+</div>
+
+<!-- Player -->
+<div class="player" id="player" style="display: none;">
+    <img id="playerCover" src="assets/default-cover.webp" width="60" class="rounded me-3">
+    <div style="flex: 1;">
+        <strong id="nowPlaying">Aucune musique</strong><br>
+        <small id="nowArtist">-</small>
+    </div>
+    <button class="btn btn-primary btn-sm me-2" id="playPauseBtn"><i class="fas fa-play"></i></button>
+</div>
+
+<audio id="audio"></audio>
+
+<script>
+    document.addEventListener('DOMContentLoaded', async () => {
+        const audio = document.getElementById('audio');
+        const player = document.getElementById('player');
+        const playerCover = document.getElementById('playerCover');
+        const nowPlaying = document.getElementById('nowPlaying');
+        const nowArtist = document.getElementById('nowArtist');
+        const playPauseBtn = document.getElementById('playPauseBtn');
+        const followBtn = document.getElementById('followBtn');
+        const notification = document.getElementById('notification');
+
+        const artistImg = document.getElementById('artistImg');
+        const artistName = document.getElementById('artistName');
+        const artistGenre = document.getElementById('artistGenre');
+        const artistBio = document.getElementById('artistBio');
+        const artistTracks = document.getElementById('artistTracks');
+        const playMixBtn = document.getElementById('playMixBtn');
+
+        // === URL des ressources publiques ===
+        const PUBLIC_URL = 'https://raw.githubusercontent.com/leonardkabo/pariszik-web/main/assets';
+        const DEFAULT_COVER = `${PUBLIC_URL}/default-cover.webp`;
+        const API_URL = 'https://pariszik-server-production.up.railway.app';
+
+        // Simuler des artistes
+        const artists = {
+            zola: {
+                name: "Zola",
+                genre: "Rap français",
+                bio: "Zola, originaire de Seine-Saint-Denis, mélange puissance verbale et poésie urbaine. Son flow percutant et ses textes engagés font de lui l'une des voix les plus marquantes du rap francilien.",
+                image: `${PUBLIC_URL}/zola.jpg`,
+                tracks: [
+                    { title: "94", cover: DEFAULT_COVER },
+                    { title: "Mémoire vive", cover: DEFAULT_COVER },
+                    { title: "Cité des anges", cover: DEFAULT_COVER }
+                ]
+            },
+            amelie: {
+                name: "Amélie Lens",
+                genre: "Techno",
+                bio: "DJ et productrice belge, Amélie Lens incarne la techno énergique et hypnotique. Basée à Marseille, elle domine les clubs parisiens avec ses sets puissants et sa présence magnétique.",
+                image: `${PUBLIC_URL}/amelie.jpg`,
+                tracks: [
+                    { title: "Exhale", cover: DEFAULT_COVER },
+                    { title: "Waiting", cover: DEFAULT_COVER },
+                    { title: "Higher", cover: DEFAULT_COVER }
+                ]
+            }
+        };
+
+        // Récupérer l'artiste depuis l'URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const artistKey = urlParams.get('nom') || 'zola';
+        const artist = artists[artistKey] || artists.zola;
+
+        // Afficher les infos
+        artistImg.src = artist.image;
+        artistName.textContent = artist.name;
+        artistGenre.textContent = artist.genre;
+        artistBio.textContent = artist.bio;
+
+        // Afficher les morceaux
+        artist.tracks.forEach((track, index) => {
+            const div = document.createElement('div');
+            div.className = 'track-item';
+            div.innerHTML = `
+                <img class="cover-mini" src="${track.cover}" alt="Cover">
+                <div style="flex: 1;">${track.title}</div>
+                <button class="btn btn-sm btn-primary" onclick="window.playTrack(${index})">▶️</button>
+            `;
+            artistTracks.appendChild(div);
+        });
+
+        // Gestion du player
+        function playTrack(track) {
+            nowPlaying.textContent = track.title;
+            nowArtist.textContent = artist.name;
+            playerCover.src = track.cover;
+            player.style.display = 'flex';
+            audio.play().then(() => {
+                playPauseBtn.innerHTML = '<i class="fas fa-pause"></i>';
+            }).catch(() => {});
+        }
+
+        // Fonctions globales
+        window.playTrack = function(index) {
+            const track = artist.tracks[index];
+            if (track) {
+                playTrack(track);
+            }
+        };
+
+        // Bouton Play/Pause
+        playPauseBtn.addEventListener('click', () => {
+            if (audio.paused) {
+                audio.play();
+                playPauseBtn.innerHTML = '<i class="fas fa-pause"></i>';
+            } else {
+                audio.pause();
+                playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
+            }
+        });
+
+        // Bouton Suivre
+        let isFollowing = false;
+        followBtn.addEventListener('click', () => {
+            isFollowing = !isFollowing;
+            followBtn.innerHTML = isFollowing ? '✅ Suivi' : '❤️ Suivre';
+            showNotification(isFollowing ? `Vous suivez ${artist.name} !` : `Vous ne suivez plus ${artist.name}`);
+        });
+
+        // Mix aléatoire
+        playMixBtn.addEventListener('click', () => {
+            const randomTrack = artist.tracks[Math.floor(Math.random() * artist.tracks.length)];
+            window.playTrack(artist.tracks.indexOf(randomTrack));
+        });
+
+        // Notification
+        function showNotification(msg) {
+            notification.textContent = msg;
+            notification.classList.add('show');
+            setTimeout(() => notification.classList.remove('show'), 3000);
+        }
+    });
+</script>
+</body>
+</html>
