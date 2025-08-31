@@ -262,7 +262,7 @@
             </button>
         </div>
 
-        <!-- === Cartes Musique (comme sur l'image) === -->
+        <!-- === Cartes Musique === -->
         <div class="row mt-4" id="featuredTracks"></div>
     </div>
 
@@ -344,10 +344,12 @@
         const fileInput = document.getElementById('fileInput');
         const logoutAdmin = document.getElementById('logoutAdmin');
 
-        // === URL des ressources locales ===
+        // === URL du serveur ===
+        const API_URL = 'https://pariszik-server-production.up.railway.app';
+
+        // === Chemin local des assets ===
         const PUBLIC_URL = 'assets';
         const DEFAULT_COVER = `${PUBLIC_URL}/default-cover.webp`;
-        const API_URL = 'https://pariszik-server-production.up.railway.app';
 
         // Pages
         const home = document.getElementById('home');
@@ -372,18 +374,12 @@
         let currentIndex = 0;
         let favoritesList = JSON.parse(localStorage.getItem('pariszik_favorites') || '[]');
 
-        // === Charger les musiques depuis le serveur ===
+        // === Charger les morceaux ===
         async function loadTracks() {
             try {
                 const res = await fetch(`${API_URL}/api/tracks`);
                 tracks = await res.json();
-
-                // Forcer un cover valide
-                tracks = tracks.map(track => ({
-                    ...track,
-                    cover: track.cover || DEFAULT_COVER
-                }));
-
+                tracks = tracks.map(t => ({ ...t, cover: t.cover || DEFAULT_COVER }));
                 renderAll();
             } catch (err) {
                 console.error('Erreur chargement tracks:', err);
@@ -456,7 +452,7 @@
             showNotification('Déconnexion admin');
         });
 
-        // === Gestion du fichier (uniquement si admin) ===
+        // === Gestion du fichier (upload) ===
         function setupFileInput() {
             fileInput.onchange = null;
             dropzone.onclick = () => fileInput.click();
@@ -464,7 +460,7 @@
             ['dragover', 'dragenter'].forEach(evt => {
                 dropzone.addEventListener(evt, e => {
                     e.preventDefault();
-                    if (isAdmin) dropzone.style.borderColor = 'var(--accent)';
+                    if (isAdmin) dropzone.style.borderColor = '#ffff00';
                 });
             });
 
@@ -489,20 +485,15 @@
             };
         }
 
-        // === Ajout de musique (vers le serveur) ===
         async function handleFile(file) {
             if (!file.name.endsWith('.mp3')) {
                 return showNotification('⚠️ Fichier invalide', 'error');
             }
 
-            const fileName = file.name.replace('.mp3', '').split('-').map(s => s.trim()).filter(Boolean);
-            const title = fileName.length > 0 ? fileName[0] : file.name.replace('.mp3', '');
-            const artist = fileName.length > 1 ? fileName[1] : 'Inconnu';
-
             const formData = new FormData();
             formData.append('audio', file);
-            formData.append('title', title);
-            formData.append('artist', artist);
+            formData.append('title', file.name.replace('.mp3', '').split('-')[0] || 'Inconnu');
+            formData.append('artist', file.name.replace('.mp3', '').split('-')[1] || 'Inconnu');
 
             try {
                 const res = await fetch(`${API_URL}/api/admin/add`, {
@@ -515,7 +506,7 @@
                 const newTrack = await res.json();
                 newTrack.cover = newTrack.cover || DEFAULT_COVER;
                 tracks.unshift(newTrack);
-                showNotification(`✅ "${title}" ajouté !`);
+                showNotification(`✅ "${newTrack.title}" ajouté !`);
                 renderAll();
                 playTrack(newTrack);
             } catch (err) {
@@ -547,7 +538,6 @@
             }
         });
 
-        // === Boutons NEXT / PREV ===
         prevBtn.addEventListener('click', () => {
             if (tracks.length === 0) return;
             const index = (currentIndex - 1 + tracks.length) % tracks.length;
@@ -562,11 +552,9 @@
             currentIndex = index;
         });
 
-        // === Bouton Cœur (Favoris) ===
         likeBtn.addEventListener('click', () => {
             const currentTrack = tracks.find(t => t.fileURL === audio.src);
             if (!currentTrack) return;
-
             const isFav = favoritesList.some(f => f.id === currentTrack.id);
             if (isFav) {
                 favoritesList = favoritesList.filter(f => f.id !== currentTrack.id);
@@ -581,54 +569,34 @@
             renderFavorites();
         });
 
-        // === Radio Automatique ===
+        // === Radio ===
         function startRadio() {
-            if (tracks.length === 0) {
-                return showNotification("❌ Aucune musique disponible", 'error');
-            }
-
+            if (tracks.length === 0) return showNotification("❌ Aucune musique");
             isRadioPlaying = true;
-            startRadioBtn.innerHTML = '<i class="fas fa-spin fa-spinner"></i> Radio en cours...';
+            startRadioBtn.innerHTML = '📻 En cours...';
             radioControls.style.display = 'block';
-
             const playNext = () => {
                 if (!isRadioPlaying) return;
-
-                const index = shuffleToggle.checked
-                    ? Math.floor(Math.random() * tracks.length)
-                    : currentIndex++ % tracks.length;
-
-                const track = tracks[index];
-                playTrack(track);
-                showNotification(`📻 En ce moment : ${track.title} par ${track.artist}`);
+                const index = Math.floor(Math.random() * tracks.length);
+                playTrack(tracks[index]);
             };
-
             playNext();
-
-            audio.onended = () => {
-                if (isRadioPlaying && repeatToggle.checked) playNext();
-            };
+            audio.onended = () => repeatToggle.checked && playNext();
         }
 
         function stopRadio() {
-            if (!isRadioPlaying) return;
-
             isRadioPlaying = false;
             audio.pause();
             audio.src = '';
-            startRadioBtn.innerHTML = '<i class="fas fa-play"></i> Écouter la Radio';
+            startRadioBtn.innerHTML = '<i class="fas fa-play"></i> Radio';
             radioControls.style.display = 'none';
-            showNotification('⏹️ Radio arrêtée');
+            showNotification('⏹️ Arrêtée');
         }
 
-        startRadioBtn.addEventListener('click', () => {
-            if (isRadioPlaying) stopRadio();
-            else startRadio();
-        });
-
+        startRadioBtn.addEventListener('click', () => isRadioPlaying ? stopRadio() : startRadio());
         stopRadioBtn.addEventListener('click', stopRadio);
 
-        // === Affichage ===
+        // === Fonctions d'affichage ===
         function renderAll() {
             renderTracks();
             renderFeatured();
@@ -724,11 +692,9 @@
         async function renderArtists() {
             const container = document.getElementById('artistsList');
             container.innerHTML = '<p>Chargement des artistes...</p>';
-
             try {
                 const res = await fetch(`${API_URL}/api/artists`);
                 const artists = await res.json();
-
                 container.innerHTML = '';
                 artists.forEach(artist => {
                     const div = document.createElement('div');
