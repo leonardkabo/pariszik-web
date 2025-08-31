@@ -229,9 +229,6 @@
             <a class="nav-link" href="#" data-page="favorites"><i class="fas fa-heart"></i> Favoris</a>
         </li>
         <li class="nav-item">
-            <a class="nav-link" href="#" data-page="artists"><i class="fas fa-microphone-alt"></i> Artistes</a>
-        </li>
-        <li class="nav-item">
             <a class="nav-link" href="#" data-page="admin" style="display: none;" id="adminLink">⚙️ Admin</a>
         </li>
     </ul>
@@ -286,28 +283,10 @@
         <div id="favoritesList"></div>
     </div>
 
-    <!-- Page: Artistes -->
-    <div id="artists" style="display: none;">
-        <h2>🧑‍🎨 Découvrez les Artistes</h2>
-        <p>Les voix qui font vibrer Paris.</p>
-        <div id="artistsList"></div>
-    </div>
-
     <!-- Page: Admin -->
     <div id="admin" style="display: none;">
         <h2>⚙️ Panel d'Administration</h2>
         <button class="btn btn-danger mt-3" id="logoutAdmin">Déconnexion</button>
-
-        <h4 class="mt-4">➕ Ajouter un Artiste</h4>
-        <form id="addArtistForm">
-            <input type="text" class="form-control mb-2" id="artistName" placeholder="Nom de l'artiste" required>
-            <input type="text" class="form-control mb-2" id="artistGenre" placeholder="Genre">
-            <textarea class="form-control mb-2" id="artistBio" placeholder="Biographie"></textarea>
-            <input type="text" class="form-control mb-2" id="artistImage" placeholder="URL de l'image">
-            <input type="text" class="form-control mb-2" id="artistCover" placeholder="URL de la bannière">
-            <button type="submit" class="btn btn-success">Ajouter</button>
-        </form>
-
         <h4 class="mt-4">🗂️ Gestion des Musiques</h4>
         <div id="adminTracksList"></div>
     </div>
@@ -344,18 +323,15 @@
         const fileInput = document.getElementById('fileInput');
         const logoutAdmin = document.getElementById('logoutAdmin');
 
-        // === URL du serveur ===
-        const API_URL = 'https://pariszik-server-production.up.railway.app';
-
-        // === Chemin local des assets ===
+        // === URL des ressources locales ===
         const PUBLIC_URL = 'assets';
         const DEFAULT_COVER = `${PUBLIC_URL}/default-cover.webp`;
+        const API_URL = 'https://pariszik-server-production.up.railway.app';
 
         // Pages
         const home = document.getElementById('home');
         const library = document.getElementById('library');
         const favorites = document.getElementById('favorites');
-        const artists = document.getElementById('artists');
         const admin = document.getElementById('admin');
         const uploadSection = document.getElementById('uploadSection');
 
@@ -368,33 +344,27 @@
 
         // Données
         let tracks = [];
-        let artistsList = [];
         let isAdmin = false;
         let isRadioPlaying = false;
         let currentIndex = 0;
         let favoritesList = JSON.parse(localStorage.getItem('pariszik_favorites') || '[]');
 
-        // === Charger les morceaux ===
+        // === Charger les musiques depuis le serveur ===
         async function loadTracks() {
             try {
                 const res = await fetch(`${API_URL}/api/tracks`);
                 tracks = await res.json();
-                tracks = tracks.map(t => ({ ...t, cover: t.cover || DEFAULT_COVER }));
+
+                // Forcer un cover valide
+                tracks = tracks.map(track => ({
+                    ...track,
+                    cover: track.cover || DEFAULT_COVER
+                }));
+
                 renderAll();
             } catch (err) {
                 console.error('Erreur chargement tracks:', err);
                 showNotification('❌ Impossible de charger les musiques', 'error');
-            }
-        }
-
-        // === Charger les artistes ===
-        async function loadArtists() {
-            try {
-                const res = await fetch(`${API_URL}/api/artists`);
-                artistsList = await res.json();
-                renderArtists();
-            } catch (err) {
-                console.error('Erreur chargement artistes:', err);
             }
         }
 
@@ -408,13 +378,11 @@
 
         // === Afficher une page ===
         function showPage(page) {
-            [home, library, favorites, artists, admin].forEach(p => p.style.display = 'none');
+            [home, library, favorites, admin].forEach(p => p.style.display = 'none');
             page.style.display = 'block';
             if (page === favorites) renderFavorites();
-            if (page === artists) renderArtists();
         }
 
-        // === Navigation entre les pages ===
         document.querySelectorAll('[data-page]').forEach(link => {
             link.addEventListener('click', e => {
                 e.preventDefault();
@@ -452,7 +420,7 @@
             showNotification('Déconnexion admin');
         });
 
-        // === Gestion du fichier (upload) ===
+        // === Gestion du fichier (uniquement si admin) ===
         function setupFileInput() {
             fileInput.onchange = null;
             dropzone.onclick = () => fileInput.click();
@@ -460,7 +428,7 @@
             ['dragover', 'dragenter'].forEach(evt => {
                 dropzone.addEventListener(evt, e => {
                     e.preventDefault();
-                    if (isAdmin) dropzone.style.borderColor = '#ffff00';
+                    if (isAdmin) dropzone.style.borderColor = 'var(--accent)';
                 });
             });
 
@@ -485,15 +453,20 @@
             };
         }
 
+        // === Ajout de musique (vers le serveur) ===
         async function handleFile(file) {
             if (!file.name.endsWith('.mp3')) {
                 return showNotification('⚠️ Fichier invalide', 'error');
             }
 
+            const fileName = file.name.replace('.mp3', '').split('-').map(s => s.trim()).filter(Boolean);
+            const title = fileName.length > 0 ? fileName[0] : file.name.replace('.mp3', '');
+            const artist = fileName.length > 1 ? fileName[1] : 'Inconnu';
+
             const formData = new FormData();
             formData.append('audio', file);
-            formData.append('title', file.name.replace('.mp3', '').split('-')[0] || 'Inconnu');
-            formData.append('artist', file.name.replace('.mp3', '').split('-')[1] || 'Inconnu');
+            formData.append('title', title);
+            formData.append('artist', artist);
 
             try {
                 const res = await fetch(`${API_URL}/api/admin/add`, {
@@ -506,7 +479,7 @@
                 const newTrack = await res.json();
                 newTrack.cover = newTrack.cover || DEFAULT_COVER;
                 tracks.unshift(newTrack);
-                showNotification(`✅ "${newTrack.title}" ajouté !`);
+                showNotification(`✅ "${title}" ajouté !`);
                 renderAll();
                 playTrack(newTrack);
             } catch (err) {
@@ -538,6 +511,7 @@
             }
         });
 
+        // === Boutons NEXT / PREV ===
         prevBtn.addEventListener('click', () => {
             if (tracks.length === 0) return;
             const index = (currentIndex - 1 + tracks.length) % tracks.length;
@@ -552,9 +526,11 @@
             currentIndex = index;
         });
 
+        // === Bouton Cœur (Favoris) ===
         likeBtn.addEventListener('click', () => {
             const currentTrack = tracks.find(t => t.fileURL === audio.src);
             if (!currentTrack) return;
+
             const isFav = favoritesList.some(f => f.id === currentTrack.id);
             if (isFav) {
                 favoritesList = favoritesList.filter(f => f.id !== currentTrack.id);
@@ -569,34 +545,54 @@
             renderFavorites();
         });
 
-        // === Radio ===
+        // === Radio Automatique ===
         function startRadio() {
-            if (tracks.length === 0) return showNotification("❌ Aucune musique");
+            if (tracks.length === 0) {
+                return showNotification("❌ Aucune musique disponible", 'error');
+            }
+
             isRadioPlaying = true;
-            startRadioBtn.innerHTML = '📻 En cours...';
+            startRadioBtn.innerHTML = '<i class="fas fa-spin fa-spinner"></i> Radio en cours...';
             radioControls.style.display = 'block';
+
             const playNext = () => {
                 if (!isRadioPlaying) return;
-                const index = Math.floor(Math.random() * tracks.length);
-                playTrack(tracks[index]);
+
+                const index = shuffleToggle.checked
+                    ? Math.floor(Math.random() * tracks.length)
+                    : currentIndex++ % tracks.length;
+
+                const track = tracks[index];
+                playTrack(track);
+                showNotification(`📻 En ce moment : ${track.title} par ${track.artist}`);
             };
+
             playNext();
-            audio.onended = () => repeatToggle.checked && playNext();
+
+            audio.onended = () => {
+                if (isRadioPlaying && repeatToggle.checked) playNext();
+            };
         }
 
         function stopRadio() {
+            if (!isRadioPlaying) return;
+
             isRadioPlaying = false;
             audio.pause();
             audio.src = '';
-            startRadioBtn.innerHTML = '<i class="fas fa-play"></i> Radio';
+            startRadioBtn.innerHTML = '<i class="fas fa-play"></i> Écouter la Radio';
             radioControls.style.display = 'none';
-            showNotification('⏹️ Arrêtée');
+            showNotification('⏹️ Radio arrêtée');
         }
 
-        startRadioBtn.addEventListener('click', () => isRadioPlaying ? stopRadio() : startRadio());
+        startRadioBtn.addEventListener('click', () => {
+            if (isRadioPlaying) stopRadio();
+            else startRadio();
+        });
+
         stopRadioBtn.addEventListener('click', stopRadio);
 
-        // === Fonctions d'affichage ===
+        // === Affichage ===
         function renderAll() {
             renderTracks();
             renderFeatured();
@@ -689,37 +685,6 @@
             });
         }
 
-        async function renderArtists() {
-            const container = document.getElementById('artistsList');
-            container.innerHTML = '<p>Chargement des artistes...</p>';
-            try {
-                const res = await fetch(`${API_URL}/api/artists`);
-                const artists = await res.json();
-                container.innerHTML = '';
-                artists.forEach(artist => {
-                    const div = document.createElement('div');
-                    div.className = 'card mb-3';
-                    div.innerHTML = `
-                        <div class="row g-0">
-                            <div class="col-3">
-                                <img src="${artist.image || DEFAULT_COVER}" class="img-fluid rounded-start" style="width: 100px; height: 100px; object-fit: cover; margin: 10px;">
-                            </div>
-                            <div class="col-9">
-                                <div class="card-body">
-                                    <h5 class="card-title">${artist.name}</h5>
-                                    <p class="card-text">${artist.genre || 'Inconnu'}</p>
-                                    <a href="artiste.html?id=${artist._id}" class="btn btn-sm btn-primary">Voir l'artiste</a>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                    container.appendChild(div);
-                });
-            } catch (err) {
-                container.innerHTML = '<p>❌ Impossible de charger les artistes.</p>';
-            }
-        }
-
         function renderAdminTracks() {
             const container = document.getElementById('adminTracksList');
             container.innerHTML = '';
@@ -804,33 +769,8 @@
             }
         };
 
-        // === Formulaire ajout artiste ===
-        document.getElementById('addArtistForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const data = {
-                name: document.getElementById('artistName').value,
-                genre: document.getElementById('artistGenre').value,
-                bio: document.getElementById('artistBio').value,
-                image: document.getElementById('artistImage').value || DEFAULT_COVER,
-                cover: document.getElementById('artistCover').value || DEFAULT_COVER
-            };
-
-            try {
-                await fetch(`${API_URL}/api/admin/artist/add`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
-                });
-                showNotification('✅ Artiste ajouté !');
-                document.getElementById('addArtistForm').reset();
-                loadArtists();
-            } catch (err) {
-                showNotification('❌ Échec', 'error');
-            }
-        });
-
         // === Chargement initial ===
-        await Promise.all([loadTracks(), loadArtists()]);
+        await loadTracks();
         showPage(home);
     });
 </script>
