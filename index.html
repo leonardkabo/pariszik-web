@@ -226,6 +226,9 @@
             <a class="nav-link" href="#" data-page="library"><i class="fas fa-music"></i> Bibliothèque</a>
         </li>
         <li class="nav-item">
+            <a class="nav-link" href="#" data-page="favorites"><i class="fas fa-heart"></i> Favoris</a>
+        </li>
+        <li class="nav-item">
             <a class="nav-link" href="#" data-page="admin" style="display: none;" id="adminLink">⚙️ Admin</a>
         </li>
     </ul>
@@ -296,6 +299,13 @@
         <div id="userTracks"></div>
     </div>
 
+    <!-- Page: Favoris -->
+    <div id="favorites" style="display: none;">
+        <h2>❤️ Vos Morceaux Préférés</h2>
+        <p>Les musiques que vous avez aimées apparaîtront ici.</p>
+        <div id="favoritesList"></div>
+    </div>
+
     <!-- Page: Admin -->
     <div id="admin" style="display: none;">
         <h2>⚙️ Panel d'Administration</h2>
@@ -342,6 +352,7 @@
         // Pages
         const home = document.getElementById('home');
         const library = document.getElementById('library');
+        const favorites = document.getElementById('favorites');
         const admin = document.getElementById('admin');
         const uploadSection = document.getElementById('uploadSection');
 
@@ -388,8 +399,9 @@
 
         // === Afficher une page ===
         function showPage(page) {
-            [home, library, admin].forEach(p => p.style.display = 'none');
+            [home, library, favorites, admin].forEach(p => p.style.display = 'none');
             page.style.display = 'block';
+            if (page === favorites) renderFavorites();
         }
 
         document.querySelectorAll('[data-page]').forEach(link => {
@@ -481,10 +493,11 @@
                     showNotification(`✅ "${newTrack.title}" ajouté !`);
                     renderAll();
 
-                    // Reset
+                    // ✅ Reset complet du formulaire
                     audioFile.value = '';
                     coverFile.value = '';
                     coverPreviewContainer.style.display = 'none';
+                    coverPreview.src = '';
 
                 } catch (err) {
                     console.error('Erreur upload:', err);
