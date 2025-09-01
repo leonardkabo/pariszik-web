@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🎧 ParisZik - La voix musicale de Paris</title>
+    <title>ParisZik - La voix musicale de Paris</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 
@@ -199,6 +199,7 @@
             right: 20px;
         }
 
+        /* === Login Modal === */
         .modal-overlay {
             display: none;
             position: fixed;
@@ -217,20 +218,25 @@
             text-align: center;
         }
 
-        /* === Recherche et filtre === */
-        .search-filter {
-            display: flex;
-            gap: 10px;
+        /* === Carte interactive === */
+        #map {
+            position: relative;
+            width: 100%;
+            height: 500px;
+            background: #1a1a3a;
+            border-radius: 16px;
+            overflow: hidden;
             margin: 20px 0;
-            flex-wrap: wrap;
         }
 
-        .search-filter input, .search-filter select {
-            background: #1a1a3a;
-            color: white;
-            border: 1px solid #00ffff;
+        .district-btn {
+            position: absolute;
+            transform: translate(-50%, -50%);
+            padding: 10px 15px;
+            border: none;
             border-radius: 8px;
-            padding: 0.5rem 1rem;
+            cursor: pointer;
+            font-weight: bold;
         }
     </style>
 </head>
@@ -266,13 +272,10 @@
             <a class="nav-link" href="#" data-page="favorites"><i class="fas fa-heart"></i> Favoris</a>
         </li>
         <li class="nav-item">
-            <a class="nav-link" href="#" data-page="latest"><i class="fas fa-fire"></i> Derniers ajouts</a>
+            <a class="nav-link" href="#" data-page="playlists"><i class="fas fa-list"></i> Mes Playlists</a>
         </li>
         <li class="nav-item">
             <a class="nav-link" href="#" data-page="map"><i class="fas fa-map"></i> Carte de Paris</a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link" href="#" data-page="events"><i class="fas fa-calendar-alt"></i> Concerts</a>
         </li>
         <li class="nav-item">
             <a class="nav-link" href="#" data-page="admin" style="display: none;" id="adminLink">⚙️ Admin</a>
@@ -305,19 +308,6 @@
             </button>
         </div>
 
-        <!-- Recherche et filtre -->
-        <div class="search-filter">
-            <input type="text" id="searchInput" placeholder="🔍 Rechercher un titre ou artiste...">
-            <select id="genreFilter">
-                <option value="">Tous les genres</option>
-                <option value="Rap">Rap</option>
-                <option value="Jazz">Jazz</option>
-                <option value="Techno">Techno</option>
-                <option value="Soul">Soul</option>
-                <option value="Pop">Pop</option>
-            </select>
-        </div>
-
         <!-- === Cartes Musique === -->
         <div class="row mt-4" id="featuredTracks"></div>
     </div>
@@ -325,43 +315,6 @@
     <!-- Page: Bibliothèque -->
     <div id="library" style="display: none;">
         <h2>📚 Votre Bibliothèque</h2>
-
-        <!-- Upload section (admin only) -->
-        <div id="uploadSection" style="display: none; padding: 20px; margin: 20px 0; border: 2px dashed var(--secondary); border-radius: 16px; background: rgba(0, 255, 255, 0.05);">
-            <h4>📤 Ajouter un nouveau morceau</h4>
-            <p>Glissez ou sélectionnez un fichier audio (.mp3) et une pochette (.jpg, .png, .webp)</p>
-
-            <!-- Upload Audio -->
-            <div class="mb-3">
-                <label for="audioFile" class="form-label">🎵 Fichier audio</label>
-                <input type="file" class="form-control" id="audioFile" accept="audio/*" required>
-            </div>
-
-            <!-- Upload Cover -->
-            <div class="mb-3">
-                <label for="coverFile" class="form-label">🖼️ Pochette (optionnel)</label>
-                <input type="file" class="form-control" id="coverFile" accept="image/*">
-            </div>
-
-            <!-- Genre -->
-            <div class="mb-3">
-                <label for="genre" class="form-label">🎧 Genre musical</label>
-                <input type="text" class="form-control" id="genre" placeholder="ex: Rap, Techno, Soul">
-            </div>
-
-            <!-- Preview Cover -->
-            <div class="mb-3" id="coverPreviewContainer" style="display: none;">
-                <label>🎨 Aperçu de la pochette</label>
-                <br>
-                <img id="coverPreview" src="" width="120" height="120" style="border-radius: 12px; object-fit: cover; border: 2px solid var(--secondary);">
-            </div>
-
-            <!-- Bouton Envoyer -->
-            <button class="btn btn-primary w-100 mt-3" id="uploadBtn">
-                <i class="fas fa-upload"></i> Ajouter à la bibliothèque
-            </button>
-        </div>
-
         <div id="userTracks"></div>
     </div>
 
@@ -372,32 +325,25 @@
         <div id="favoritesList"></div>
     </div>
 
-    <!-- Page: Derniers ajouts -->
-    <div id="latest" style="display: none;">
-        <h2>🔥 Derniers ajouts</h2>
-        <p>Les nouveautés qui font vibrer le monde musical en ce moment</p>
-        <div id="latestTracks"></div>
+    <!-- Page: Playlists -->
+    <div id="playlists" style="display: none;">
+        <h2>🎶 Mes Playlists</h2>
+        <button class="btn btn-success mb-3" id="createPlaylistBtn">+ Nouvelle Playlist</button>
+        <div id="playlistsList"></div>
     </div>
 
     <!-- Page: Carte de Paris -->
-    <div id="map" style="display: none;">
+    <div id="mapPage" style="display: none;">
         <h2>📍 Paris en musique</h2>
         <p>Cliquez sur un quartier pour découvrir son style</p>
-        <div style="position: relative; width: 100%; height: 500px; background: #1a1a3a; border-radius: 16px; overflow: hidden;">
+        <div id="map">
             <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/08/Paris_map.svg/1200px-Paris_map.svg.png" 
                  style="width: 100%; height: 100%; opacity: 0.2; pointer-events: none;">
-            <button class="district-btn" data-genre="Rap" style="position: absolute; top: 40%; left: 45%; transform: translate(-50%, -50%); background: #ff1493; color: white; border: none; padding: 10px 15px; border-radius: 8px; cursor: pointer;">Seine-Saint-Denis</button>
-            <button class="district-btn" data-genre="Jazz" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #00ffff; color: black; border: none; padding: 10px 15px; border-radius: 8px; cursor: pointer;">Montmartre</button>
-            <button class="district-btn" data-genre="Techno" style="position: absolute; top: 60%; left: 55%; transform: translate(-50%, -50%); background: #ffff00; color: black; border: none; padding: 10px 15px; border-radius: 8px; cursor: pointer;">Belleville</button>
+            <button class="district-btn" data-genre="Rap" style="top: 40%; left: 45%; background: #ff1493; color: white;">Seine-Saint-Denis</button>
+            <button class="district-btn" data-genre="Jazz" style="top: 50%; left: 50%; background: #00ffff; color: black;">Montmartre</button>
+            <button class="district-btn" data-genre="Techno" style="top: 60%; left: 55%; background: #ffff00; color: black;">Belleville</button>
         </div>
         <div id="mapTracks" class="mt-4"></div>
-    </div>
-
-    <!-- Page: Concerts -->
-    <div id="events" style="display: none;">
-        <h2>📅 Concerts à Paris</h2>
-        <p>Découvrez les événements musicaux en ville</p>
-        <div id="eventsList"></div>
     </div>
 
     <!-- Page: Admin -->
@@ -406,10 +352,6 @@
         <button class="btn btn-danger mt-3" id="logoutAdmin">Déconnexion</button>
         <h4 class="mt-4">🗂️ Gestion des Musiques</h4>
         <div id="adminTracksList"></div>
-
-        <!-- Historique des éditions -->
-        <h4 class="mt-4">📅 Historique des modifications</h4>
-        <div id="editHistory"></div>
     </div>
 </div>
 
@@ -460,19 +402,10 @@
         const home = document.getElementById('home');
         const library = document.getElementById('library');
         const favorites = document.getElementById('favorites');
-        const latest = document.getElementById('latest');
-        const map = document.getElementById('map');
-        const events = document.getElementById('events');
+        const playlists = document.getElementById('playlists');
+        const mapPage = document.getElementById('mapPage');
         const admin = document.getElementById('admin');
-        const uploadSection = document.getElementById('uploadSection');
         const loginModal = document.getElementById('loginModal');
-
-        // Boutons radio
-        const startRadioBtn = document.getElementById('startRadioBtn');
-        const stopRadioBtn = document.getElementById('stopRadioBtn');
-        const radioControls = document.getElementById('radioControls');
-        const shuffleToggle = document.getElementById('shuffleToggle');
-        const repeatToggle = document.getElementById('repeatToggle');
 
         // Données
         let tracks = [];
@@ -480,7 +413,7 @@
         let isRadioPlaying = false;
         let currentIndex = 0;
         let favoritesList = JSON.parse(localStorage.getItem('pariszik_favorites') || '[]');
-        let editHistory = [];
+        let userPlaylists = JSON.parse(localStorage.getItem('pariszik_playlists') || '[]');
 
         // === Charger les musiques depuis le serveur ===
         async function loadTracks() {
@@ -512,12 +445,11 @@
 
         // === Afficher une page ===
         function showPage(page) {
-            [home, library, favorites, latest, map, events, admin].forEach(p => p.style.display = 'none');
+            [home, library, favorites, playlists, mapPage, admin].forEach(p => p.style.display = 'none');
             page.style.display = 'block';
             if (page === favorites) renderFavorites();
-            if (page === latest) renderLatest();
-            if (page === map) renderMap();
-            if (page === events) loadEvents();
+            if (page === playlists) renderPlaylists();
+            if (page === mapPage) renderMap();
         }
 
         document.querySelectorAll('[data-page]').forEach(link => {
@@ -528,11 +460,11 @@
                     showNotification('Accès refusé', 'error');
                     return;
                 }
-                showPage(document.getElementById(page));
+                showPage(document.getElementById(page === 'map' ? 'mapPage' : page));
             });
         });
 
-        // === Gestion du login admin ===
+        // === Gestion du login admin (haché) ===
         document.getElementById('adminBtn').addEventListener('click', () => {
             loginModal.style.display = 'flex';
         });
@@ -550,10 +482,8 @@
                     isAdmin = true;
                     loginModal.style.display = 'none';
                     document.getElementById('adminLink').style.display = 'block';
-                    uploadSection.style.display = 'block';
                     showPage(admin);
                     renderAdminTracks();
-                    setupFileInput();
                     showNotification('🔐 Accès admin autorisé');
                 } else {
                     showNotification('Mot de passe incorrect', 'error');
@@ -567,74 +497,9 @@
             stopRadio();
             isAdmin = false;
             document.getElementById('adminLink').style.display = 'none';
-            uploadSection.style.display = 'none';
             showPage(home);
             showNotification('Déconnexion admin');
         });
-
-        // === Gestion de l'upload (audio + cover + genre) ===
-        function setupFileInput() {
-            const audioFile = document.getElementById('audioFile');
-            const coverFile = document.getElementById('coverFile');
-            const coverPreview = document.getElementById('coverPreview');
-            const coverPreviewContainer = document.getElementById('coverPreviewContainer');
-            const genreInput = document.getElementById('genre');
-            const uploadBtn = document.getElementById('uploadBtn');
-
-            coverFile.onchange = () => {
-                const file = coverFile.files[0];
-                if (file) {
-                    const reader = new FileReader();
-                    reader.onload = () => {
-                        coverPreview.src = reader.result;
-                        coverPreviewContainer.style.display = 'block';
-                    };
-                    reader.readAsDataURL(file);
-                }
-            };
-
-            uploadBtn.onclick = async () => {
-                const audio = audioFile.files[0];
-                const cover = coverFile.files[0];
-                const genre = genreInput.value;
-
-                if (!audio || !audio.name.endsWith('.mp3')) {
-                    return showNotification('⚠️ Veuillez sélectionner un fichier .mp3', 'error');
-                }
-
-                const formData = new FormData();
-                formData.append('audio', audio);
-                formData.append('title', audio.name.replace('.mp3', '').split('-')[0] || 'Sans titre');
-                formData.append('artist', audio.name.replace('.mp3', '').split('-')[1] || 'Inconnu');
-                if (genre) formData.append('genre', genre);
-                if (cover) formData.append('cover', cover);
-
-                try {
-                    const res = await fetch(`${API_URL}/api/admin/add`, {
-                        method: 'POST',
-                        body: formData
-                    });
-
-                    if (!res.ok) throw new Error(await res.text());
-
-                    const newTrack = await res.json();
-                    tracks.unshift(newTrack);
-                    showNotification(`✅ "${newTrack.title}" ajouté !`);
-                    renderAll();
-
-                    // Reset
-                    audioFile.value = '';
-                    coverFile.value = '';
-                    genreInput.value = '';
-                    coverPreviewContainer.style.display = 'none';
-                    coverPreview.src = '';
-
-                } catch (err) {
-                    console.error('Erreur upload:', err);
-                    showNotification(`❌ Échec: ${err.message}`, 'error');
-                }
-            };
-        }
 
         // === Lecteur ===
         function playTrack(track) {
@@ -739,39 +604,19 @@
 
         stopRadioBtn.addEventListener('click', stopRadio);
 
-        // === Recherche et filtre ===
-        const searchInput = document.getElementById('searchInput');
-        const genreFilter = document.getElementById('genreFilter');
-
-        searchInput.addEventListener('input', renderAll);
-        genreFilter.addEventListener('change', renderAll);
-
-        function filterTracks() {
-            const query = searchInput.value.toLowerCase();
-            const genre = genreFilter.value;
-            return tracks.filter(track => {
-                const matchesSearch = !query ||
-                    track.title.toLowerCase().includes(query) ||
-                    track.artist.toLowerCase().includes(query);
-                const matchesGenre = !genre || track.genre.toLowerCase().includes(genre.toLowerCase());
-                return matchesSearch && matchesGenre;
-            });
-        }
-
         // === Affichage ===
         function renderAll() {
-            const filtered = filterTracks();
-            renderTracks(filtered);
+            renderTracks();
             renderFeatured();
             if (isAdmin) renderAdminTracks();
             renderFavorites();
-            renderLatest();
+            renderPlaylists();
         }
 
-        function renderTracks(filteredTracks) {
+        function renderTracks() {
             const container = document.getElementById('userTracks');
             container.innerHTML = '';
-            filteredTracks.forEach((track, index) => {
+            tracks.forEach((track, index) => {
                 const isFav = favoritesList.some(f => f.id === track.id);
                 const card = document.createElement('div');
                 card.className = 'card h-100 shadow-lg border-0 rounded-3 overflow-hidden';
@@ -779,18 +624,18 @@
                     <img src="${track.cover}" class="card-img-top" alt="Pochette" onerror="this.onerror=null;this.src='${DEFAULT_COVER}';">
                     <div class="card-body p-3 bg-dark text-white">
                         <h5 class="card-title">${track.title}</h5>
-                        <small class="text-muted">${track.artist} • ${track.genre}</small>
+                        <small class="text-muted">${track.artist}</small>
                         <div class="d-flex justify-content-between align-items-center mt-2">
-                            <button class="btn btn-outline-light btn-sm px-3" onclick="window.playTrack(${tracks.indexOf(track)})">
+                            <button class="btn btn-outline-light btn-sm px-3" onclick="window.playTrack(${index})">
                                 <i class="fas fa-play"></i> Écouter
                             </button>
-                            <button class="btn btn-link text-white p-0" onclick="window.toggleFavorite(${tracks.indexOf(track)})">
+                            <button class="btn btn-link text-white p-0" onclick="window.toggleFavorite(${index})">
                                 <i class="${isFav ? 'fas fa-heart' : 'far fa-heart'}"></i>
                             </button>
                         </div>
                     </div>
                 `;
-                card.onclick = () => window.playTrack(tracks.indexOf(track));
+                card.onclick = () => window.playTrack(index);
                 container.appendChild(card);
             });
         }
@@ -798,7 +643,7 @@
         function renderFeatured() {
             const container = document.getElementById('featuredTracks');
             container.innerHTML = '';
-            filterTracks().slice(0, 3).forEach((track, index) => {
+            tracks.slice(0, 3).forEach((track, index) => {
                 const isFav = favoritesList.some(f => f.id === track.id);
                 const col = document.createElement('div');
                 col.className = 'col-md-4 mb-4';
@@ -809,10 +654,10 @@
                             <h5 class="card-title">${track.title}</h5>
                             <small class="text-muted">${track.artist}</small>
                             <div class="d-flex justify-content-between align-items-center mt-2">
-                                <button class="btn btn-outline-light btn-sm px-3" onclick="window.playTrack(${tracks.indexOf(track)})">
+                                <button class="btn btn-outline-light btn-sm px-3" onclick="window.playTrack(${index})">
                                     <i class="fas fa-play"></i> Écouter
                                 </button>
-                                <button class="btn btn-link text-white p-0" onclick="window.toggleFavorite(${tracks.indexOf(track)})">
+                                <button class="btn btn-link text-white p-0" onclick="window.toggleFavorite(${index})">
                                     <i class="${isFav ? 'fas fa-heart' : 'far fa-heart'}"></i>
                                 </button>
                             </div>
@@ -853,30 +698,21 @@
             });
         }
 
-        function renderLatest() {
-            const container = document.getElementById('latestTracks');
+        function renderPlaylists() {
+            const container = document.getElementById('playlistsList');
             container.innerHTML = '';
-
-            const sorted = [...tracks].sort((a, b) => b.id - a.id).slice(0, 5);
-
-            sorted.forEach((track, index) => {
-                const card = document.createElement('div');
-                card.className = 'card mb-3';
-                card.innerHTML = `
-                    <div class="row g-0">
-                        <div class="col-3">
-                            <img src="${track.cover}" class="img-fluid rounded-start" style="width: 100px; height: 100px; object-fit: cover; margin: 10px;">
-                        </div>
-                        <div class="col-9">
-                            <div class="card-body">
-                                <h5 class="card-title">${track.title}</h5>
-                                <p class="card-text">${track.artist}</p>
-                                <button class="btn btn-sm btn-primary" onclick="window.playTrack(${tracks.indexOf(track)})">▶️ Écouter</button>
-                            </div>
-                        </div>
+            userPlaylists.forEach((pl, plIndex) => {
+                const div = document.createElement('div');
+                div.className = 'card mb-3';
+                div.innerHTML = `
+                    <div class="card-body">
+                        <h5>${pl.name}</h5>
+                        <small>${pl.tracks.length} morceaux</small>
+                        <button class="btn btn-sm btn-primary mt-2" onclick="window.playPlaylist(${plIndex})">▶️ Écouter</button>
+                        <button class="btn btn-sm btn-danger mt-2" onclick="window.deletePlaylist(${plIndex})">🗑️</button>
                     </div>
                 `;
-                container.appendChild(card);
+                container.appendChild(div);
             });
         }
 
@@ -909,30 +745,14 @@
                 div.innerHTML = `
                     <div class="d-flex justify-content-between">
                         <div>
-                            <strong>${track.title}</strong> par <small>${track.artist}</small> • ${track.genre}
+                            <strong>${track.title}</strong> par <small>${track.artist}</small>
                         </div>
                         <div>
-                            <button class="btn btn-sm btn-warning me-2" onclick="window.editTrack(${index})">✏️</button>
+                            <button class="btn btn-sm btn-primary me-2" onclick="window.playTrack(${index})">▶️</button>
                             <button class="btn btn-sm btn-danger" onclick="window.deleteTrack(${index})">🗑️</button>
                         </div>
                     </div>
                 `;
-                container.appendChild(div);
-            });
-            renderEditHistory();
-        }
-
-        function renderEditHistory() {
-            const container = document.getElementById('editHistory');
-            container.innerHTML = '';
-            if (editHistory.length === 0) {
-                container.innerHTML = '<p>Aucune modification.</p>';
-                return;
-            }
-            editHistory.forEach(log => {
-                const div = document.createElement('div');
-                div.className = 'alert alert-info';
-                div.textContent = `${log.action} - ${new Date(log.time).toLocaleString()}`;
                 container.appendChild(div);
             });
         }
@@ -1000,69 +820,29 @@
             }
         };
 
-        window.editTrack = async function(index) {
-            const track = tracks[index];
-            const newTitle = prompt('Titre', track.title);
-            const newArtist = prompt('Artiste', track.artist);
-            const newGenre = prompt('Genre', track.genre);
-
-            if (!newTitle || !newArtist) return;
-
-            const formData = new FormData();
-            if (newTitle) formData.append('title', newTitle);
-            if (newArtist) formData.append('artist', newArtist);
-            if (newGenre) formData.append('genre', newGenre);
-
-            try {
-                const res = await fetch(`${API_URL}/api/admin/edit/${track.id}`, {
-                    method: 'PUT',
-                    body: formData
-                });
-
-                if (!res.ok) throw new Error(await res.text());
-
-                const updatedTrack = await res.json();
-                tracks[index] = updatedTrack;
-                editHistory.unshift({
-                    action: `Morceau "${track.title}" modifié`,
-                    time: new Date()
-                });
-                renderAll();
-                showNotification('✅ Morceau mis à jour');
-            } catch (err) {
-                showNotification('❌ Échec modification', 'error');
+        // === Playlists ===
+        window.createPlaylist = () => {
+            const name = prompt('Nom de la playlist ?');
+            if (name) {
+                userPlaylists.push({ name, tracks: [] });
+                localStorage.setItem('pariszik_playlists', JSON.stringify(userPlaylists));
+                renderPlaylists();
             }
         };
 
-        // === Gestion des événements ===
-        async function loadEvents() {
-            try {
-                const res = await fetch(`${API_URL}/api/events`);
-                const eventsData = await res.json();
-                const container = document.getElementById('eventsList');
-                container.innerHTML = '';
-                eventsData.forEach(event => {
-                    const date = new Date(event.date).toLocaleDateString('fr-FR', {
-                        weekday: 'long', day: 'numeric', month: 'long', hour: '2H', minute: '2m'
-                    });
-                    const div = document.createElement('div');
-                    div.className = 'card mb-3';
-                    div.innerHTML = `
-                        <div class="card-body">
-                            <h5>${event.title}</h5>
-                            <p><strong>${event.artist}</strong></p>
-                            <p>📅 ${date}</p>
-                            <p>📍 ${event.location}</p>
-                            <p>${event.description}</p>
-                        </div>
-                    `;
-                    container.appendChild(div);
-                });
-            } catch (err) {
-                console.error('Erreur chargement événements:', err);
-                showNotification('❌ Impossible de charger les concerts', 'error');
+        window.playPlaylist = (index) => {
+            if (userPlaylists[index].tracks.length > 0) {
+                playTrack(userPlaylists[index].tracks[0]);
             }
-        }
+        };
+
+        window.deletePlaylist = (index) => {
+            userPlaylists.splice(index, 1);
+            localStorage.setItem('pariszik_playlists', JSON.stringify(userPlaylists));
+            renderPlaylists();
+        };
+
+        document.getElementById('createPlaylistBtn').onclick = createPlaylist;
 
         // === PWA Installation ===
         let deferredPrompt;
