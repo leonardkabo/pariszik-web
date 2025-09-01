@@ -178,6 +178,10 @@
             align-items: center;
             padding: 0 1rem;
             z-index: 1000;
+            background-image: url('assets/default-cover.webp');
+            background-size: cover;
+            background-position: center;
+            background-blend-mode: overlay;
         }
 
         .notification {
@@ -229,6 +233,12 @@
             <a class="nav-link" href="#" data-page="favorites"><i class="fas fa-heart"></i> Favoris</a>
         </li>
         <li class="nav-item">
+            <a class="nav-link" href="#" data-page="latest"><i class="fas fa-fire"></i> Derniers ajouts</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" href="#" data-page="map"><i class="fas fa-map"></i> Carte de Paris</a>
+        </li>
+        <li class="nav-item">
             <a class="nav-link" href="#" data-page="admin" style="display: none;" id="adminLink">⚙️ Admin</a>
         </li>
     </ul>
@@ -238,8 +248,8 @@
 <div class="main-content">
     <!-- Page: Accueil -->
     <div id="home">
-        <h2>🎵 Raby vous souhaite la bienvenue sur ParisZik ❤️ En ce moment à Paris</h2>
-        <p>Découvrez la musique qui fait battre le cœur de Paris</p>
+        <h2>En ce moment à Paris</h2>
+        <p>Découvrez la musique qui fait battre le cœur de Paris ❤️</p>
 
         <!-- Bouton Radio -->
         <button id="startRadioBtn" class="btn-radio">
@@ -283,6 +293,12 @@
                 <input type="file" class="form-control" id="coverFile" accept="image/*">
             </div>
 
+            <!-- Genre -->
+            <div class="mb-3">
+                <label for="genre" class="form-label">🎧 Genre musical</label>
+                <input type="text" class="form-control" id="genre" placeholder="ex: Rap, Techno, Soul">
+            </div>
+
             <!-- Preview Cover -->
             <div class="mb-3" id="coverPreviewContainer" style="display: none;">
                 <label>🎨 Aperçu de la pochette</label>
@@ -304,6 +320,27 @@
         <h2>❤️ Vos Morceaux Préférés</h2>
         <p>Les musiques que vous avez aimées apparaîtront ici.</p>
         <div id="favoritesList"></div>
+    </div>
+
+    <!-- Page: Derniers ajouts -->
+    <div id="latest" style="display: none;">
+        <h2>🔥 Derniers ajouts</h2>
+        <p>Les nouveautés qui font vibrer le monde musical actuellement</p>
+        <div id="latestTracks"></div>
+    </div>
+
+    <!-- Page: Carte de Paris -->
+    <div id="map" style="display: none;">
+        <h2>📍 Paris en musique</h2>
+        <p>Cliquez sur un quartier pour découvrir son style</p>
+        <div style="position: relative; width: 100%; height: 500px; background: #1a1a3a; border-radius: 16px; overflow: hidden;">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/08/Paris_map.svg/1200px-Paris_map.svg.png" 
+                 style="width: 100%; height: 100%; opacity: 0.2; pointer-events: none;">
+            <button class="district-btn" data-genre="Rap" style="position: absolute; top: 40%; left: 45%; transform: translate(-50%, -50%); background: #ff1493; color: white; border: none; padding: 10px 15px; border-radius: 8px; cursor: pointer;">Seine-Saint-Denis</button>
+            <button class="district-btn" data-genre="Jazz" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #00ffff; color: black; border: none; padding: 10px 15px; border-radius: 8px; cursor: pointer;">Montmartre</button>
+            <button class="district-btn" data-genre="Techno" style="position: absolute; top: 60%; left: 55%; transform: translate(-50%, -50%); background: #ffff00; color: black; border: none; padding: 10px 15px; border-radius: 8px; cursor: pointer;">Belleville</button>
+        </div>
+        <div id="mapTracks" class="mt-4"></div>
     </div>
 
     <!-- Page: Admin -->
@@ -353,6 +390,8 @@
         const home = document.getElementById('home');
         const library = document.getElementById('library');
         const favorites = document.getElementById('favorites');
+        const latest = document.getElementById('latest');
+        const map = document.getElementById('map');
         const admin = document.getElementById('admin');
         const uploadSection = document.getElementById('uploadSection');
 
@@ -379,7 +418,8 @@
                 // Forcer un cover valide
                 tracks = tracks.map(track => ({
                     ...track,
-                    cover: track.cover || DEFAULT_COVER
+                    cover: track.cover || DEFAULT_COVER,
+                    genre: track.genre || 'Inconnu'
                 }));
 
                 renderAll();
@@ -399,9 +439,11 @@
 
         // === Afficher une page ===
         function showPage(page) {
-            [home, library, favorites, admin].forEach(p => p.style.display = 'none');
+            [home, library, favorites, latest, map, admin].forEach(p => p.style.display = 'none');
             page.style.display = 'block';
             if (page === favorites) renderFavorites();
+            if (page === latest) renderLatest();
+            if (page === map) renderMap();
         }
 
         document.querySelectorAll('[data-page]').forEach(link => {
@@ -441,12 +483,13 @@
             showNotification('Déconnexion admin');
         });
 
-        // === Gestion de l'upload (audio + cover) ===
+        // === Gestion de l'upload (audio + cover + genre) ===
         function setupFileInput() {
             const audioFile = document.getElementById('audioFile');
             const coverFile = document.getElementById('coverFile');
             const coverPreview = document.getElementById('coverPreview');
             const coverPreviewContainer = document.getElementById('coverPreviewContainer');
+            const genreInput = document.getElementById('genre');
             const uploadBtn = document.getElementById('uploadBtn');
 
             // Aperçu de la cover
@@ -466,6 +509,7 @@
             uploadBtn.onclick = async () => {
                 const audio = audioFile.files[0];
                 const cover = coverFile.files[0];
+                const genre = genreInput.value;
 
                 if (!audio || !audio.name.endsWith('.mp3')) {
                     return showNotification('⚠️ Veuillez sélectionner un fichier .mp3', 'error');
@@ -475,10 +519,8 @@
                 formData.append('audio', audio);
                 formData.append('title', audio.name.replace('.mp3', '').split('-')[0] || 'Sans titre');
                 formData.append('artist', audio.name.replace('.mp3', '').split('-')[1] || 'Inconnu');
-
-                if (cover) {
-                    formData.append('cover', cover);
-                }
+                if (genre) formData.append('genre', genre);
+                if (cover) formData.append('cover', cover);
 
                 try {
                     const res = await fetch(`${API_URL}/api/admin/add`, {
@@ -496,6 +538,7 @@
                     // ✅ Reset complet du formulaire
                     audioFile.value = '';
                     coverFile.value = '';
+                    genreInput.value = '';
                     coverPreviewContainer.style.display = 'none';
                     coverPreview.src = '';
 
@@ -513,6 +556,7 @@
             nowPlaying.textContent = track.title;
             nowArtist.textContent = track.artist;
             playerCover.src = track.cover || DEFAULT_COVER;
+            player.style.backgroundImage = `url('${track.cover || DEFAULT_COVER}')`;
             player.style.display = 'flex';
             audio.play().then(() => {
                 playPauseBtn.innerHTML = '<i class="fas fa-pause"></i>';
@@ -616,6 +660,7 @@
             renderFeatured();
             if (isAdmin) renderAdminTracks();
             renderFavorites();
+            renderLatest();
         }
 
         function renderTracks() {
@@ -700,6 +745,53 @@
                 `;
                 card.onclick = () => window.playTrackFromFavorites(index);
                 container.appendChild(card);
+            });
+        }
+
+        function renderLatest() {
+            const container = document.getElementById('latestTracks');
+            container.innerHTML = '';
+
+            const sorted = [...tracks].sort((a, b) => b.id - a.id).slice(0, 5);
+
+            sorted.forEach((track, index) => {
+                const card = document.createElement('div');
+                card.className = 'card mb-3';
+                card.innerHTML = `
+                    <div class="row g-0">
+                        <div class="col-3">
+                            <img src="${track.cover}" class="img-fluid rounded-start" style="width: 100px; height: 100px; object-fit: cover; margin: 10px;">
+                        </div>
+                        <div class="col-9">
+                            <div class="card-body">
+                                <h5 class="card-title">${track.title}</h5>
+                                <p class="card-text">${track.artist}</p>
+                                <button class="btn btn-sm btn-primary" onclick="window.playTrack(${tracks.indexOf(track)})">▶️ Écouter</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function renderMap() {
+            document.querySelectorAll('.district-btn').forEach(btn => {
+                btn.onclick = () => {
+                    const genre = btn.dataset.genre;
+                    const container = document.getElementById('mapTracks');
+                    container.innerHTML = `<h5>🎧 ${genre} à Paris</h5>`;
+                    const filtered = tracks.filter(t => t.genre.toLowerCase().includes(genre.toLowerCase()));
+                    if (filtered.length === 0) {
+                        container.innerHTML += '<p>Aucun morceau trouvé.</p>';
+                        return;
+                    }
+                    filtered.forEach(track => {
+                        const div = document.createElement('div');
+                        div.innerHTML = `<strong>${track.title}</strong> par ${track.artist} <button class="btn btn-sm btn-primary" onclick="window.playTrack(${tracks.indexOf(track)})">▶️</button>`;
+                        container.appendChild(div);
+                    });
+                };
             });
         }
 
