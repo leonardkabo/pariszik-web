@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ParisZik - La voix musicale de Paris</title>
+    <title>🎧 ParisZik - La voix musicale de Paris</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 
@@ -95,7 +95,6 @@
             padding: 2rem;
         }
 
-        /* === Carte de musique (design demandé) === */
         .card {
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid rgba(0, 255, 255, 0.2);
@@ -199,6 +198,25 @@
         .notification.show {
             right: 20px;
         }
+
+        /* === Login Modal === */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            justify-content: center;
+            align-items: center;
+            z-index: 3000;
+        }
+
+        .modal-content {
+            background: var(--dark);
+            padding: 30px;
+            border-radius: 16px;
+            width: 350px;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
@@ -236,7 +254,7 @@
             <a class="nav-link" href="#" data-page="latest"><i class="fas fa-fire"></i> Derniers ajouts</a>
         </li>
         <li class="nav-item">
-            <a class="nav-link" href="#" data-page="map"><i class="fas fa-map"></i> Carte de Paris</a>
+            <a class="nav-link" href="#" data-page="playlists"><i class="fas fa-list"></i> Mes Playlists</a>
         </li>
         <li class="nav-item">
             <a class="nav-link" href="#" data-page="admin" style="display: none;" id="adminLink">⚙️ Admin</a>
@@ -329,18 +347,11 @@
         <div id="latestTracks"></div>
     </div>
 
-    <!-- Page: Carte de Paris -->
-    <div id="map" style="display: none;">
-        <h2>📍 Paris en musique</h2>
-        <p>Cliquez sur un quartier pour découvrir son style</p>
-        <div style="position: relative; width: 100%; height: 500px; background: #1a1a3a; border-radius: 16px; overflow: hidden;">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/08/Paris_map.svg/1200px-Paris_map.svg.png" 
-                 style="width: 100%; height: 100%; opacity: 0.2; pointer-events: none;">
-            <button class="district-btn" data-genre="Rap" style="position: absolute; top: 40%; left: 45%; transform: translate(-50%, -50%); background: #ff1493; color: white; border: none; padding: 10px 15px; border-radius: 8px; cursor: pointer;">Seine-Saint-Denis</button>
-            <button class="district-btn" data-genre="Jazz" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #00ffff; color: black; border: none; padding: 10px 15px; border-radius: 8px; cursor: pointer;">Montmartre</button>
-            <button class="district-btn" data-genre="Techno" style="position: absolute; top: 60%; left: 55%; transform: translate(-50%, -50%); background: #ffff00; color: black; border: none; padding: 10px 15px; border-radius: 8px; cursor: pointer;">Belleville</button>
-        </div>
-        <div id="mapTracks" class="mt-4"></div>
+    <!-- Page: Playlists -->
+    <div id="playlists" style="display: none;">
+        <h2>🎶 Mes Playlists</h2>
+        <button class="btn btn-success mb-3" id="createPlaylistBtn">+ Nouvelle Playlist</button>
+        <div id="playlistsList"></div>
     </div>
 
     <!-- Page: Admin -->
@@ -349,6 +360,15 @@
         <button class="btn btn-danger mt-3" id="logoutAdmin">Déconnexion</button>
         <h4 class="mt-4">🗂️ Gestion des Musiques</h4>
         <div id="adminTracksList"></div>
+    </div>
+</div>
+
+<!-- Login Modal -->
+<div id="loginModal" class="modal-overlay">
+    <div class="modal-content">
+        <h4>🔐 Connexion Admin</h4>
+        <input type="password" id="adminPassword" class="form-control mb-3" placeholder="Mot de passe" style="background: #1a1a3a; color: white; border: 1px solid #00ffff;">
+        <button class="btn btn-primary w-100" id="loginSubmit">Se connecter</button>
     </div>
 </div>
 
@@ -384,16 +404,17 @@
         // === URL des ressources locales ===
         const PUBLIC_URL = 'assets';
         const DEFAULT_COVER = `${PUBLIC_URL}/default-cover.webp`;
-        const API_URL = 'https://pariszik-server-production.up.railway.app'; // ✅ Corrigé : pas d'espace
+        const API_URL = 'https://pariszik-server-production.up.railway.app';
 
         // Pages
         const home = document.getElementById('home');
         const library = document.getElementById('library');
         const favorites = document.getElementById('favorites');
         const latest = document.getElementById('latest');
-        const map = document.getElementById('map');
+        const playlists = document.getElementById('playlists');
         const admin = document.getElementById('admin');
         const uploadSection = document.getElementById('uploadSection');
+        const loginModal = document.getElementById('loginModal');
 
         // Boutons radio
         const startRadioBtn = document.getElementById('startRadioBtn');
@@ -408,6 +429,7 @@
         let isRadioPlaying = false;
         let currentIndex = 0;
         let favoritesList = JSON.parse(localStorage.getItem('pariszik_favorites') || '[]');
+        let playlistsData = JSON.parse(localStorage.getItem('pariszik_playlists') || '[]');
 
         // === Charger les musiques depuis le serveur ===
         async function loadTracks() {
@@ -439,11 +461,11 @@
 
         // === Afficher une page ===
         function showPage(page) {
-            [home, library, favorites, latest, map, admin].forEach(p => p.style.display = 'none');
+            [home, library, favorites, latest, playlists, admin].forEach(p => p.style.display = 'none');
             page.style.display = 'block';
             if (page === favorites) renderFavorites();
             if (page === latest) renderLatest();
-            if (page === map) renderMap();
+            if (page === playlists) renderPlaylists();
         }
 
         document.querySelectorAll('[data-page]').forEach(link => {
@@ -458,19 +480,34 @@
             });
         });
 
-        // === Gestion Admin ===
+        // === Gestion du login admin (sans prompt) ===
         document.getElementById('adminBtn').addEventListener('click', () => {
-            const pwd = prompt('Mot de passe admin :');
-            if (pwd === 'admin123') {
-                isAdmin = true;
-                document.getElementById('adminLink').style.display = 'block';
-                uploadSection.style.display = 'block';
-                showPage(admin);
-                renderAdminTracks();
-                setupFileInput();
-                showNotification('🔐 Accès admin autorisé');
-            } else {
-                showNotification('Mot de passe incorrect', 'error');
+            loginModal.style.display = 'flex';
+        });
+
+        document.getElementById('loginSubmit').addEventListener('click', async () => {
+            const pwd = document.getElementById('adminPassword').value;
+            try {
+                const res = await fetch(`${API_URL}/api/admin/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password: pwd })
+                });
+
+                if (res.ok) {
+                    isAdmin = true;
+                    loginModal.style.display = 'none';
+                    document.getElementById('adminLink').style.display = 'block';
+                    uploadSection.style.display = 'block';
+                    showPage(admin);
+                    renderAdminTracks();
+                    setupFileInput();
+                    showNotification('🔐 Accès admin autorisé');
+                } else {
+                    showNotification('Mot de passe incorrect', 'error');
+                }
+            } catch (err) {
+                showNotification('Erreur de connexion', 'error');
             }
         });
 
@@ -492,7 +529,6 @@
             const genreInput = document.getElementById('genre');
             const uploadBtn = document.getElementById('uploadBtn');
 
-            // Aperçu de la cover
             coverFile.onchange = () => {
                 const file = coverFile.files[0];
                 if (file) {
@@ -505,7 +541,6 @@
                 }
             };
 
-            // Bouton Ajouter
             uploadBtn.onclick = async () => {
                 const audio = audioFile.files[0];
                 const cover = coverFile.files[0];
@@ -535,7 +570,7 @@
                     showNotification(`✅ "${newTrack.title}" ajouté !`);
                     renderAll();
 
-                    // ✅ Reset complet du formulaire
+                    // Reset
                     audioFile.value = '';
                     coverFile.value = '';
                     genreInput.value = '';
@@ -573,7 +608,6 @@
             }
         });
 
-        // === Boutons NEXT / PREV ===
         prevBtn.addEventListener('click', () => {
             if (tracks.length === 0) return;
             const index = (currentIndex - 1 + tracks.length) % tracks.length;
@@ -588,7 +622,6 @@
             currentIndex = index;
         });
 
-        // === Bouton Cœur (Favoris) ===
         likeBtn.addEventListener('click', () => {
             const currentTrack = tracks.find(t => t.fileURL === audio.src);
             if (!currentTrack) return;
@@ -661,6 +694,7 @@
             if (isAdmin) renderAdminTracks();
             renderFavorites();
             renderLatest();
+            renderPlaylists();
         }
 
         function renderTracks() {
@@ -775,23 +809,21 @@
             });
         }
 
-        function renderMap() {
-            document.querySelectorAll('.district-btn').forEach(btn => {
-                btn.onclick = () => {
-                    const genre = btn.dataset.genre;
-                    const container = document.getElementById('mapTracks');
-                    container.innerHTML = `<h5>🎧 ${genre} à Paris</h5>`;
-                    const filtered = tracks.filter(t => t.genre.toLowerCase().includes(genre.toLowerCase()));
-                    if (filtered.length === 0) {
-                        container.innerHTML += '<p>Aucun morceau trouvé.</p>';
-                        return;
-                    }
-                    filtered.forEach(track => {
-                        const div = document.createElement('div');
-                        div.innerHTML = `<strong>${track.title}</strong> par ${track.artist} <button class="btn btn-sm btn-primary" onclick="window.playTrack(${tracks.indexOf(track)})">▶️</button>`;
-                        container.appendChild(div);
-                    });
-                };
+        function renderPlaylists() {
+            const container = document.getElementById('playlistsList');
+            container.innerHTML = '';
+            playlistsData.forEach((pl, plIndex) => {
+                const div = document.createElement('div');
+                div.className = 'card mb-3';
+                div.innerHTML = `
+                    <div class="card-body">
+                        <h5>${pl.name}</h5>
+                        <small>${pl.tracks.length} morceaux</small>
+                        <button class="btn btn-sm btn-primary mt-2" onclick="window.playPlaylist(${plIndex})">▶️ Écouter</button>
+                        <button class="btn btn-sm btn-danger mt-2" onclick="window.deletePlaylist(${plIndex})">🗑️</button>
+                    </div>
+                `;
+                container.appendChild(div);
             });
         }
 
@@ -878,6 +910,40 @@
                 }
             }
         };
+
+        // === Playlists ===
+        window.createPlaylist = () => {
+            const name = prompt('Nom de la playlist ?');
+            if (name) {
+                playlistsData.push({ name, tracks: [] });
+                localStorage.setItem('pariszik_playlists', JSON.stringify(playlistsData));
+                renderPlaylists();
+            }
+        };
+
+        window.playPlaylist = (index) => {
+            if (playlistsData[index].tracks.length > 0) {
+                playTrack(playlistsData[index].tracks[0]);
+            }
+        };
+
+        window.deletePlaylist = (index) => {
+            playlistsData.splice(index, 1);
+            localStorage.setItem('pariszik_playlists', JSON.stringify(playlistsData));
+            renderPlaylists();
+        };
+
+        document.getElementById('createPlaylistBtn').onclick = createPlaylist;
+
+        // === PWA Installation ===
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            if (confirm('Voulez-vous installer ParisZik sur votre appareil ?')) {
+                deferredPrompt.prompt();
+            }
+        });
 
         // === Chargement initial ===
         await loadTracks();
