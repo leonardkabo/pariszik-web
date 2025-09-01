@@ -7,16 +7,12 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 
-    <!-- === Favicon === -->
+    <!-- === Favicon & PWA === -->
     <link rel="icon" href="assets/favicon.webp" type="image/webp">
-
-    <!-- === PWA Manifest === -->
     <link rel="manifest" href="/manifest.json">
     <link rel="apple-touch-icon" href="assets/icon-512.webp">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="apple-mobile-web-app-title" content="ParisZik">
     <meta name="theme-color" content="#00ffff">
     <!-- ==================== -->
 
@@ -24,9 +20,7 @@
         :root {
             --primary: #ff1493;
             --secondary: #00ffff;
-            --accent: #ffff00;
             --dark: #0f0c29;
-            --card: rgba(30, 25, 60, 0.8);
             --hover: rgba(0, 255, 255, 0.1);
             --success: #32cd32;
             --danger: #ff4500;
@@ -95,7 +89,6 @@
             padding: 2rem;
         }
 
-        /* === Carte de musique === */
         .card {
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid rgba(0, 255, 255, 0.2);
@@ -135,17 +128,8 @@
             color: black;
         }
 
-        .btn-link {
-            text-decoration: none;
-            color: white;
-        }
-
-        .btn-link i {
-            font-size: 1.2rem;
-        }
-
         .btn-radio {
-            background: linear-gradient(45deg, var(--secondary), var(--accent));
+            background: linear-gradient(45deg, var(--secondary), var(--accent, #ffff00));
             color: white;
             border: none;
             padding: 12px 24px;
@@ -157,13 +141,6 @@
             display: inline-flex;
             align-items: center;
             gap: 8px;
-        }
-
-        .radio-controls {
-            margin: 1rem 0;
-            padding: 1rem;
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 12px;
         }
 
         .player {
@@ -230,13 +207,7 @@
             <a class="nav-link" href="#" data-page="library"><i class="fas fa-music"></i> Bibliothèque</a>
         </li>
         <li class="nav-item">
-            <a class="nav-link" href="#" data-page="favorites"><i class="fas fa-heart"></i> Favoris</a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link" href="#" data-page="latest"><i class="fas fa-fire"></i> Derniers ajouts</a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link" href="#" data-page="map"><i class="fas fa-map"></i> Carte de Paris</a>
+            <a class="nav-link" href="#" data-page="playlists"><i class="fas fa-list"></i> Mes Playlists</a>
         </li>
         <li class="nav-item">
             <a class="nav-link" href="#" data-page="admin" style="display: none;" id="adminLink">⚙️ Admin</a>
@@ -250,97 +221,23 @@
     <div id="home">
         <h2>En ce moment à Paris</h2>
         <p>Découvrez la musique qui fait battre le cœur de Paris ❤️</p>
-
-        <!-- Bouton Radio -->
         <button id="startRadioBtn" class="btn-radio">
             <i class="fas fa-play"></i> Écouter la Radio
         </button>
-
-        <!-- Contrôles Radio -->
-        <div class="radio-controls" id="radioControls" style="display: none;">
-            <label>
-                <input type="checkbox" id="shuffleToggle"> Mode aléatoire
-            </label>
-            <label style="margin-left: 20px;">
-                <input type="checkbox" id="repeatToggle" checked> Répéter
-            </label>
-            <button class="btn btn-sm btn-danger" id="stopRadioBtn" style="margin-left: 20px;">
-                <i class="fas fa-stop"></i> Arrêter
-            </button>
-        </div>
-
-        <!-- === Cartes Musique === -->
         <div class="row mt-4" id="featuredTracks"></div>
     </div>
 
     <!-- Page: Bibliothèque -->
     <div id="library" style="display: none;">
         <h2>📚 Votre Bibliothèque</h2>
-        <!-- Upload section (admin only) -->
-        <div id="uploadSection" style="display: none; padding: 20px; margin: 20px 0; border: 2px dashed var(--secondary); border-radius: 16px; background: rgba(0, 255, 255, 0.05);">
-            <h4>📤 Ajouter un nouveau morceau</h4>
-            <p>Glissez ou sélectionnez un fichier audio (.mp3) et une pochette (.jpg, .png, .webp)</p>
-
-            <!-- Upload Audio -->
-            <div class="mb-3">
-                <label for="audioFile" class="form-label">🎵 Fichier audio</label>
-                <input type="file" class="form-control" id="audioFile" accept="audio/*" required>
-            </div>
-
-            <!-- Upload Cover -->
-            <div class="mb-3">
-                <label for="coverFile" class="form-label">🖼️ Pochette (optionnel)</label>
-                <input type="file" class="form-control" id="coverFile" accept="image/*">
-            </div>
-
-            <!-- Genre -->
-            <div class="mb-3">
-                <label for="genre" class="form-label">🎧 Genre musical</label>
-                <input type="text" class="form-control" id="genre" placeholder="ex: Rap, Techno, Soul">
-            </div>
-
-            <!-- Preview Cover -->
-            <div class="mb-3" id="coverPreviewContainer" style="display: none;">
-                <label>🎨 Aperçu de la pochette</label>
-                <br>
-                <img id="coverPreview" src="" width="120" height="120" style="border-radius: 12px; object-fit: cover; border: 2px solid var(--secondary);">
-            </div>
-
-            <!-- Bouton Envoyer -->
-            <button class="btn btn-primary w-100 mt-3" id="uploadBtn">
-                <i class="fas fa-upload"></i> Ajouter à la bibliothèque
-            </button>
-        </div>
-
         <div id="userTracks"></div>
     </div>
 
-    <!-- Page: Favoris -->
-    <div id="favorites" style="display: none;">
-        <h2>❤️ Vos Morceaux Préférés</h2>
-        <p>Les musiques que vous avez aimées apparaîtront ici.</p>
-        <div id="favoritesList"></div>
-    </div>
-
-    <!-- Page: Derniers ajouts -->
-    <div id="latest" style="display: none;">
-        <h2>🔥 Derniers ajouts</h2>
-        <p>Les nouveautés qui font vibrer le monde musical en ce moment</p>
-        <div id="latestTracks"></div>
-    </div>
-
-    <!-- Page: Carte de Paris -->
-    <div id="map" style="display: none;">
-        <h2>📍 Paris en musique</h2>
-        <p>Cliquez sur un quartier pour découvrir son style</p>
-        <div style="position: relative; width: 100%; height: 500px; background: #1a1a3a; border-radius: 16px; overflow: hidden;">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/08/Paris_map.svg/1200px-Paris_map.svg.png" 
-                 style="width: 100%; height: 100%; opacity: 0.2; pointer-events: none;">
-            <button class="district-btn" data-genre="Rap" style="position: absolute; top: 40%; left: 45%; transform: translate(-50%, -50%); background: #ff1493; color: white; border: none; padding: 10px 15px; border-radius: 8px; cursor: pointer;">Seine-Saint-Denis</button>
-            <button class="district-btn" data-genre="Jazz" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #00ffff; color: black; border: none; padding: 10px 15px; border-radius: 8px; cursor: pointer;">Montmartre</button>
-            <button class="district-btn" data-genre="Techno" style="position: absolute; top: 60%; left: 55%; transform: translate(-50%, -50%); background: #ffff00; color: black; border: none; padding: 10px 15px; border-radius: 8px; cursor: pointer;">Belleville</button>
-        </div>
-        <div id="mapTracks" class="mt-4"></div>
+    <!-- Page: Playlists -->
+    <div id="playlists" style="display: none;">
+        <h2>🎶 Mes Playlists</h2>
+        <button class="btn btn-success mb-3" id="createPlaylistBtn">+ Nouvelle Playlist</button>
+        <div id="playlistsList"></div>
     </div>
 
     <!-- Page: Admin -->
@@ -381,26 +278,16 @@
         const notification = document.getElementById('notification');
         const logoutAdmin = document.getElementById('logoutAdmin');
 
-        // === URL des ressources locales ===
-        const PUBLIC_URL = 'assets';
-        const DEFAULT_COVER = `${PUBLIC_URL}/default-cover.webp`;
+        // === URL du serveur ===
         const API_URL = 'https://pariszik-server-production.up.railway.app';
+        const DEFAULT_COVER = 'assets/default-cover.webp';
 
         // Pages
         const home = document.getElementById('home');
         const library = document.getElementById('library');
-        const favorites = document.getElementById('favorites');
-        const latest = document.getElementById('latest');
-        const map = document.getElementById('map');
+        const playlists = document.getElementById('playlists');
         const admin = document.getElementById('admin');
         const uploadSection = document.getElementById('uploadSection');
-
-        // Boutons radio
-        const startRadioBtn = document.getElementById('startRadioBtn');
-        const stopRadioBtn = document.getElementById('stopRadioBtn');
-        const radioControls = document.getElementById('radioControls');
-        const shuffleToggle = document.getElementById('shuffleToggle');
-        const repeatToggle = document.getElementById('repeatToggle');
 
         // Données
         let tracks = [];
@@ -408,21 +295,22 @@
         let isRadioPlaying = false;
         let currentIndex = 0;
         let favoritesList = JSON.parse(localStorage.getItem('pariszik_favorites') || '[]');
+        let userPlaylists = JSON.parse(localStorage.getItem('pariszik_playlists') || '[]');
 
-        // === Charger les musiques depuis le serveur ===
+        // === Charger les morceaux depuis le serveur (incluant les anciens) ===
         async function loadTracks() {
             try {
                 const res = await fetch(`${API_URL}/api/tracks`);
                 tracks = await res.json();
 
-                // Forcer un cover valide
-                tracks = tracks.map(track => ({
-                    ...track,
-                    cover: track.cover || DEFAULT_COVER,
-                    genre: track.genre || 'Inconnu'
+                // Assurez que chaque morceau a une cover
+                tracks = tracks.map(t => ({
+                    ...t,
+                    cover: t.cover || DEFAULT_COVER
                 }));
 
                 renderAll();
+                showNotification(`✅ ${tracks.length} morceaux chargés`);
             } catch (err) {
                 console.error('Erreur chargement tracks:', err);
                 showNotification('❌ Impossible de charger les musiques', 'error');
@@ -439,11 +327,9 @@
 
         // === Afficher une page ===
         function showPage(page) {
-            [home, library, favorites, latest, map, admin].forEach(p => p.style.display = 'none');
+            [home, library, playlists, admin].forEach(p => p.style.display = 'none');
             page.style.display = 'block';
-            if (page === favorites) renderFavorites();
-            if (page === latest) renderLatest();
-            if (page === map) renderMap();
+            if (page === playlists) renderPlaylists();
         }
 
         document.querySelectorAll('[data-page]').forEach(link => {
@@ -464,10 +350,8 @@
             if (pwd === 'admin123') {
                 isAdmin = true;
                 document.getElementById('adminLink').style.display = 'block';
-                uploadSection.style.display = 'block';
                 showPage(admin);
                 renderAdminTracks();
-                setupFileInput();
                 showNotification('🔐 Accès admin autorisé');
             } else {
                 showNotification('Mot de passe incorrect', 'error');
@@ -478,76 +362,9 @@
             stopRadio();
             isAdmin = false;
             document.getElementById('adminLink').style.display = 'none';
-            uploadSection.style.display = 'none';
             showPage(home);
             showNotification('Déconnexion admin');
         });
-
-        // === Gestion de l'upload (audio + cover + genre) ===
-        function setupFileInput() {
-            const audioFile = document.getElementById('audioFile');
-            const coverFile = document.getElementById('coverFile');
-            const coverPreview = document.getElementById('coverPreview');
-            const coverPreviewContainer = document.getElementById('coverPreviewContainer');
-            const genreInput = document.getElementById('genre');
-            const uploadBtn = document.getElementById('uploadBtn');
-
-            // Aperçu de la cover
-            coverFile.onchange = () => {
-                const file = coverFile.files[0];
-                if (file) {
-                    const reader = new FileReader();
-                    reader.onload = () => {
-                        coverPreview.src = reader.result;
-                        coverPreviewContainer.style.display = 'block';
-                    };
-                    reader.readAsDataURL(file);
-                }
-            };
-
-            // Bouton Ajouter
-            uploadBtn.onclick = async () => {
-                const audio = audioFile.files[0];
-                const cover = coverFile.files[0];
-                const genre = genreInput.value;
-
-                if (!audio || !audio.name.endsWith('.mp3')) {
-                    return showNotification('⚠️ Veuillez sélectionner un fichier .mp3', 'error');
-                }
-
-                const formData = new FormData();
-                formData.append('audio', audio);
-                formData.append('title', audio.name.replace('.mp3', '').split('-')[0] || 'Sans titre');
-                formData.append('artist', audio.name.replace('.mp3', '').split('-')[1] || 'Inconnu');
-                if (genre) formData.append('genre', genre);
-                if (cover) formData.append('cover', cover);
-
-                try {
-                    const res = await fetch(`${API_URL}/api/admin/add`, {
-                        method: 'POST',
-                        body: formData
-                    });
-
-                    if (!res.ok) throw new Error(await res.text());
-
-                    const newTrack = await res.json();
-                    tracks.unshift(newTrack);
-                    showNotification(`✅ "${newTrack.title}" ajouté !`);
-                    renderAll();
-
-                    // ✅ Reset complet du formulaire
-                    audioFile.value = '';
-                    coverFile.value = '';
-                    genreInput.value = '';
-                    coverPreviewContainer.style.display = 'none';
-                    coverPreview.src = '';
-
-                } catch (err) {
-                    console.error('Erreur upload:', err);
-                    showNotification(`❌ Échec: ${err.message}`, 'error');
-                }
-            };
-        }
 
         // === Lecteur ===
         function playTrack(track) {
@@ -573,7 +390,6 @@
             }
         });
 
-        // === Boutons NEXT / PREV ===
         prevBtn.addEventListener('click', () => {
             if (tracks.length === 0) return;
             const index = (currentIndex - 1 + tracks.length) % tracks.length;
@@ -588,101 +404,33 @@
             currentIndex = index;
         });
 
-        // === Bouton Cœur (Favoris) ===
-        likeBtn.addEventListener('click', () => {
-            const currentTrack = tracks.find(t => t.fileURL === audio.src);
-            if (!currentTrack) return;
-
-            const isFav = favoritesList.some(f => f.id === currentTrack.id);
-            if (isFav) {
-                favoritesList = favoritesList.filter(f => f.id !== currentTrack.id);
-                likeBtn.innerHTML = '<i class="far fa-heart"></i>';
-                showNotification('🎵 Retiré des favoris');
-            } else {
-                favoritesList.push(currentTrack);
-                likeBtn.innerHTML = '<i class="fas fa-heart"></i>';
-                showNotification('❤️ Ajouté aux favoris');
-            }
-            localStorage.setItem('pariszik_favorites', JSON.stringify(favoritesList));
-            renderFavorites();
+        // === Radio ===
+        document.getElementById('startRadioBtn').addEventListener('click', () => {
+            if (tracks.length === 0) return showNotification('❌ Aucune musique');
+            const track = tracks[Math.floor(Math.random() * tracks.length)];
+            playTrack(track);
+            showNotification(`📻 En ce moment : ${track.title}`);
         });
-
-        // === Radio Automatique ===
-        function startRadio() {
-            if (tracks.length === 0) {
-                return showNotification("❌ Aucune musique disponible", 'error');
-            }
-
-            isRadioPlaying = true;
-            startRadioBtn.innerHTML = '<i class="fas fa-spin fa-spinner"></i> Radio en cours...';
-            radioControls.style.display = 'block';
-
-            const playNext = () => {
-                if (!isRadioPlaying) return;
-
-                const index = shuffleToggle.checked
-                    ? Math.floor(Math.random() * tracks.length)
-                    : currentIndex++ % tracks.length;
-
-                const track = tracks[index];
-                playTrack(track);
-                showNotification(`📻 En ce moment : ${track.title} par ${track.artist}`);
-            };
-
-            playNext();
-
-            audio.onended = () => {
-                if (isRadioPlaying && repeatToggle.checked) playNext();
-            };
-        }
-
-        function stopRadio() {
-            if (!isRadioPlaying) return;
-
-            isRadioPlaying = false;
-            audio.pause();
-            audio.src = '';
-            startRadioBtn.innerHTML = '<i class="fas fa-play"></i> Écouter la Radio';
-            radioControls.style.display = 'none';
-            showNotification('⏹️ Radio arrêtée');
-        }
-
-        startRadioBtn.addEventListener('click', () => {
-            if (isRadioPlaying) stopRadio();
-            else startRadio();
-        });
-
-        stopRadioBtn.addEventListener('click', stopRadio);
 
         // === Affichage ===
         function renderAll() {
             renderTracks();
             renderFeatured();
             if (isAdmin) renderAdminTracks();
-            renderFavorites();
-            renderLatest();
         }
 
         function renderTracks() {
             const container = document.getElementById('userTracks');
             container.innerHTML = '';
             tracks.forEach((track, index) => {
-                const isFav = favoritesList.some(f => f.id === track.id);
                 const card = document.createElement('div');
-                card.className = 'card h-100 shadow-lg border-0 rounded-3 overflow-hidden';
+                card.className = 'card';
                 card.innerHTML = `
-                    <img src="${track.cover}" class="card-img-top" alt="Pochette" onerror="this.onerror=null;this.src='${DEFAULT_COVER}';">
-                    <div class="card-body p-3 bg-dark text-white">
-                        <h5 class="card-title">${track.title}</h5>
-                        <small class="text-muted">${track.artist}</small>
-                        <div class="d-flex justify-content-between align-items-center mt-2">
-                            <button class="btn btn-outline-light btn-sm px-3" onclick="window.playTrack(${index})">
-                                <i class="fas fa-play"></i> Écouter
-                            </button>
-                            <button class="btn btn-link text-white p-0" onclick="window.toggleFavorite(${index})">
-                                <i class="${isFav ? 'fas fa-heart' : 'far fa-heart'}"></i>
-                            </button>
-                        </div>
+                    <img src="${track.cover}" class="card-img-top" alt="Cover">
+                    <div class="card-body">
+                        <h5>${track.title}</h5>
+                        <small>${track.artist}</small>
+                        <button class="btn btn-outline-light btn-sm mt-2" onclick="window.playTrack(${index})">▶️ Écouter</button>
                     </div>
                 `;
                 card.onclick = () => window.playTrack(index);
@@ -694,104 +442,18 @@
             const container = document.getElementById('featuredTracks');
             container.innerHTML = '';
             tracks.slice(0, 3).forEach((track, index) => {
-                const isFav = favoritesList.some(f => f.id === track.id);
                 const col = document.createElement('div');
-                col.className = 'col-md-4 mb-4';
+                col.className = 'col-md-4';
                 col.innerHTML = `
-                    <div class="card h-100 shadow-lg border-0 rounded-3 overflow-hidden">
-                        <img src="${track.cover}" class="card-img-top" alt="Pochette" onerror="this.onerror=null;this.src='${DEFAULT_COVER}';">
-                        <div class="card-body p-3 bg-dark text-white">
-                            <h5 class="card-title">${track.title}</h5>
-                            <small class="text-muted">${track.artist}</small>
-                            <div class="d-flex justify-content-between align-items-center mt-2">
-                                <button class="btn btn-outline-light btn-sm px-3" onclick="window.playTrack(${index})">
-                                    <i class="fas fa-play"></i> Écouter
-                                </button>
-                                <button class="btn btn-link text-white p-0" onclick="window.toggleFavorite(${index})">
-                                    <i class="${isFav ? 'fas fa-heart' : 'far fa-heart'}"></i>
-                                </button>
-                            </div>
+                    <div class="card">
+                        <img src="${track.cover}" class="card-img-top">
+                        <div class="card-body">
+                            <h5>${track.title}</h5>
+                            <button class="btn btn-outline-light btn-sm" onclick="window.playTrack(${index})">▶️</button>
                         </div>
                     </div>
                 `;
                 container.appendChild(col);
-            });
-        }
-
-        function renderFavorites() {
-            const container = document.getElementById('favoritesList');
-            container.innerHTML = '';
-            if (favoritesList.length === 0) {
-                container.innerHTML = '<p>Aucun favori pour le moment.</p>';
-                return;
-            }
-            favoritesList.forEach((track, index) => {
-                const card = document.createElement('div');
-                card.className = 'card h-100 shadow-lg border-0 rounded-3 overflow-hidden';
-                card.innerHTML = `
-                    <img src="${track.cover}" class="card-img-top" alt="Pochette" onerror="this.onerror=null;this.src='${DEFAULT_COVER}';">
-                    <div class="card-body p-3 bg-dark text-white">
-                        <h5 class="card-title">${track.title}</h5>
-                        <small class="text-muted">${track.artist}</small>
-                        <div class="d-flex justify-content-between align-items-center mt-2">
-                            <button class="btn btn-outline-light btn-sm px-3" onclick="window.playTrackFromFavorites(${index})">
-                                <i class="fas fa-play"></i> Écouter
-                            </button>
-                            <button class="btn btn-link text-white p-0" onclick="window.removeFavorite(${index})">
-                                <i class="fas fa-heart"></i>
-                            </button>
-                        </div>
-                    </div>
-                `;
-                card.onclick = () => window.playTrackFromFavorites(index);
-                container.appendChild(card);
-            });
-        }
-
-        function renderLatest() {
-            const container = document.getElementById('latestTracks');
-            container.innerHTML = '';
-
-            const sorted = [...tracks].sort((a, b) => b.id - a.id).slice(0, 5);
-
-            sorted.forEach((track, index) => {
-                const card = document.createElement('div');
-                card.className = 'card mb-3';
-                card.innerHTML = `
-                    <div class="row g-0">
-                        <div class="col-3">
-                            <img src="${track.cover}" class="img-fluid rounded-start" style="width: 100px; height: 100px; object-fit: cover; margin: 10px;">
-                        </div>
-                        <div class="col-9">
-                            <div class="card-body">
-                                <h5 class="card-title">${track.title}</h5>
-                                <p class="card-text">${track.artist}</p>
-                                <button class="btn btn-sm btn-primary" onclick="window.playTrack(${tracks.indexOf(track)})">▶️ Écouter</button>
-                            </div>
-                        </div>
-                    </div>
-                `;
-                container.appendChild(card);
-            });
-        }
-
-        function renderMap() {
-            document.querySelectorAll('.district-btn').forEach(btn => {
-                btn.onclick = () => {
-                    const genre = btn.dataset.genre;
-                    const container = document.getElementById('mapTracks');
-                    container.innerHTML = `<h5>🎧 ${genre} à Paris</h5>`;
-                    const filtered = tracks.filter(t => t.genre.toLowerCase().includes(genre.toLowerCase()));
-                    if (filtered.length === 0) {
-                        container.innerHTML += '<p>Aucun morceau trouvé.</p>';
-                        return;
-                    }
-                    filtered.forEach(track => {
-                        const div = document.createElement('div');
-                        div.innerHTML = `<strong>${track.title}</strong> par ${track.artist} <button class="btn btn-sm btn-primary" onclick="window.playTrack(${tracks.indexOf(track)})">▶️</button>`;
-                        container.appendChild(div);
-                    });
-                };
             });
         }
 
@@ -800,15 +462,48 @@
             container.innerHTML = '';
             tracks.forEach((track, index) => {
                 const div = document.createElement('div');
-                div.className = 'card p-3 mb-2';
+                div.innerHTML = `<div><strong>${track.title}</strong> - ${track.artist} <button onclick="window.deleteTrack(${index})">🗑️</button></div>`;
+                container.appendChild(div);
+            });
+        }
+
+        // === Fonctions globales ===
+        window.playTrack = function(index) {
+            const track = tracks[index];
+            if (track) playTrack(track);
+        };
+
+        window.deleteTrack = async function(index) {
+            if (confirm(`Supprimer ${tracks[index].title} ?`)) {
+                await fetch(`${API_URL}/api/admin/delete/${tracks[index].id}`, { method: 'DELETE' });
+                tracks.splice(index, 1);
+                renderAll();
+                showNotification('🗑️ Supprimé');
+            }
+        };
+
+        // === Playlists ===
+        window.createPlaylist = () => {
+            const name = prompt('Nom de la playlist ?');
+            if (name) {
+                userPlaylists.push({ name, tracks: [] });
+                localStorage.setItem('pariszik_playlists', JSON.stringify(userPlaylists));
+                renderPlaylists();
+            }
+        };
+
+        function renderPlaylists() {
+            const container = document.getElementById('playlistsList');
+            container.innerHTML = '';
+            userPlaylists.forEach((pl, i) => {
+                const div = document.createElement('div');
                 div.innerHTML = `
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <strong>${track.title}</strong> par <small>${track.artist}</small>
-                        </div>
-                        <div>
-                            <button class="btn btn-sm btn-primary me-2" onclick="window.playTrack(${index})">▶️</button>
-                            <button class="btn btn-sm btn-danger" onclick="window.deleteTrack(${index})">🗑️</button>
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <h5>${pl.name}</h5>
+                            <button class="btn btn-primary btn-sm" onclick="window.playPlaylist(${i})">▶️</button>
+                            <button class="btn btn-danger btn-sm" onclick="window.deletePlaylist(${i})">🗑️</button>
+                            <button class="btn btn-success btn-sm" onclick="window.sharePlaylist(${i})">🔗 Partager</button>
                         </div>
                     </div>
                 `;
@@ -816,70 +511,51 @@
             });
         }
 
-        // === Fonctions globales ===
-        window.playTrack = function(index) {
-            stopRadio();
-            const track = tracks[index];
-            if (track) {
-                playTrack(track);
-                updateLikeButton(track);
-                currentIndex = index;
-            } else {
-                showNotification('❌ Morceau introuvable', 'error');
+        window.playPlaylist = (index) => {
+            if (userPlaylists[index].tracks.length > 0) {
+                playTrack(userPlaylists[index].tracks[0]);
             }
         };
 
-        window.playTrackFromFavorites = function(index) {
-            const track = favoritesList[index];
-            if (track) {
-                playTrack(track);
-                updateLikeButton(track);
-                currentIndex = tracks.findIndex(t => t.id === track.id);
+        window.deletePlaylist = (index) => {
+            userPlaylists.splice(index, 1);
+            localStorage.setItem('pariszik_playlists', JSON.stringify(userPlaylists));
+            renderPlaylists();
+        };
+
+        // === Partage de playlist ===
+        window.sharePlaylist = async (index) => {
+            const playlist = userPlaylists[index];
+            const shareId = Math.random().toString(36).substr(2, 9);
+            try {
+                await fetch(`${API_URL}/api/playlists/share`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: shareId, ...playlist })
+                });
+                const link = `${window.location.origin}?shared=${shareId}`;
+                alert(`Lien de partage : ${link}`);
+            } catch (err) {
+                showNotification('❌ Échec du partage', 'error');
             }
         };
 
-        window.toggleFavorite = function(index) {
-            event.stopPropagation();
-            const track = tracks[index];
-            const isFav = favoritesList.some(f => f.id === track.id);
-            if (isFav) {
-                favoritesList = favoritesList.filter(f => f.id !== track.id);
-                showNotification('🎵 Retiré des favoris');
-            } else {
-                favoritesList.push(track);
-                showNotification('❤️ Ajouté aux favoris');
-            }
-            localStorage.setItem('pariszik_favorites', JSON.stringify(favoritesList));
-            renderAll();
-        };
-
-        window.removeFavorite = function(index) {
-            const track = favoritesList[index];
-            favoritesList.splice(index, 1);
-            localStorage.setItem('pariszik_favorites', JSON.stringify(favoritesList));
-            renderFavorites();
-            showNotification('🗑️ Retiré des favoris');
-        };
-
-        function updateLikeButton(track) {
-            const isFav = favoritesList.some(f => f.id === track.id);
-            likeBtn.innerHTML = isFav ? '<i class="fas fa-heart"></i>' : '<i class="far fa-heart"></i>';
+        // === Charger une playlist partagée ===
+        const urlParams = new URLSearchParams(window.location.search);
+        const shared = urlParams.get('shared');
+        if (shared) {
+            fetch(`${API_URL}/api/playlists/share/${shared}`)
+                .then(res => res.json())
+                .then(data => {
+                    userPlaylists.push(data);
+                    localStorage.setItem('pariszik_playlists', JSON.stringify(userPlaylists));
+                    showNotification(`✅ Playlist "${data.name}" ajoutée !`);
+                    showPage(playlists);
+                })
+                .catch(() => showNotification('❌ Playlist introuvable', 'error'));
         }
 
-        window.deleteTrack = async function(index) {
-            if (confirm(`Supprimer "${tracks[index].title}" ?`)) {
-                try {
-                    await fetch(`${API_URL}/api/admin/delete/${tracks[index].id}`, { method: 'DELETE' });
-                    tracks.splice(index, 1);
-                    renderAll();
-                    showNotification('🗑️ Supprimé');
-                } catch (err) {
-                    showNotification('❌ Échec suppression', 'error');
-                }
-            }
-        };
-
-        // === Chargement initial ===
+        // === Démarrage ===
         await loadTracks();
         showPage(home);
     });
