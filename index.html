@@ -765,13 +765,62 @@
             renderFavorites();
         });
 
-        // === Radio ===
-        startRadioBtn.addEventListener('click', () => {
-            if (tracks.length === 0) return;
-            const track = tracks[Math.floor(Math.random() * tracks.length)];
-            playTrack(track);
-            showNotification(`📻 En ce moment : ${track.title}`);
-        });
+            // === Radio Automatique ===
+function startRadio() {
+    if (tracks.length === 0) {
+        return showNotification("❌ Aucune musique disponible", 'error');
+    }
+
+    isRadioPlaying = true;
+    startRadioBtn.innerHTML = '<i class="fas fa-spin fa-spinner"></i> Radio en cours...';
+    radioControls.style.display = 'block';
+
+    const playNext = () => {
+        if (!isRadioPlaying) return;
+
+        const index = shuffleToggle.checked
+            ? Math.floor(Math.random() * tracks.length)
+            : (currentIndex + 1) % tracks.length;
+
+        currentIndex = index;
+        const track = tracks[index];
+        playTrack(track);
+        showNotification(`📻 En ce moment : ${track.title} par ${track.artist}`);
+    };
+
+    playNext();
+
+    // Gérer la fin du morceau
+    audio.onended = () => {
+        if (isRadioPlaying && repeatToggle.checked) {
+            playNext();
+        } else if (isRadioPlaying && !repeatToggle.checked) {
+            stopRadio();
+            showNotification('▶️ Radio terminée');
+        }
+    };
+}
+
+function stopRadio() {
+    if (!isRadioPlaying) return;
+
+    isRadioPlaying = false;
+    audio.pause();
+    startRadioBtn.innerHTML = '<i class="fas fa-play"></i> Écouter la Radio';
+    radioControls.style.display = 'none';
+    showNotification('⏹️ Radio arrêtée');
+}
+
+// === Événements radio ===
+startRadioBtn.addEventListener('click', () => {
+    if (isRadioPlaying) {
+        stopRadio();
+    } else {
+        startRadio();
+    }
+});
+
+stopRadioBtn.addEventListener('click', stopRadio);
 
         // === Affichage ===
         function renderAll() {
