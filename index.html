@@ -694,7 +694,7 @@
                 if (cover) formData.append('cover', cover);
 
                 try {
-                    const res = await fetch(`${API_URL}/api/admin/add`, { method: 'POST', body: formData });
+                    const res = await fetch(`${API_URL}/api/admin/add-to-mega`, { method: 'POST', body: formData });
                     const newTrack = await res.json();
                     tracks.unshift(newTrack);
                     showNotification(`✅ "${newTrack.title}" ajouté !`);
